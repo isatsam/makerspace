@@ -1,6 +1,24 @@
-import database as db
-from flask import Flask
+import models
+from makerspace import db
+from flask import abort, jsonify, request
+from flask.views import MethodView
+from typing import Any
 
+#
+# Helper functions
+#
+def get_current_member() -> Any:
+    '''
+        Get the current Member model object from `request.cookies`
+    '''
+    member_id = request.cookies.get("member_id")
+    if member_id:
+        result = db.session.execute(
+            db.select(models.Member)
+            .where(id == member_id)
+        ).scalar_one() # same as .scalar().one(), and, in this case, scalar().first()
+        return result
+    return None
 
 # /api/equipment
 #   GET: return a list of all (member: OK, admin: OK)
