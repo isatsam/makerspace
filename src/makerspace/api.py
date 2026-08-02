@@ -1,4 +1,4 @@
-import models
+from . import models
 from makerspace import db, app
 from flask import abort, jsonify, request
 from flask.views import MethodView
@@ -58,20 +58,20 @@ PATCH methods on objects that belong to them. Default is False
 
         if member is None:
             if self.anon_get_allowed:
-                return jsonify(item.to_json())
+                return jsonify(item.to_dict())
             else:
                 abort(403)
 
         if member.is_admin:
-            return jsonify(item.to_json())
+            return jsonify(item.to_dict())
 
         try: # if item has .member_id field
             if item.member_id == member.id:
-                return jsonify(item.to_json())
+                return jsonify(item.to_dict())
             else:
                 abort(403)
         except AttributeError: # if item does not have .member_id field
-            return jsonify(item.to_json())
+            return jsonify(item.to_dict())
 
     def patch(self, id=None) -> Any:
         # All members can edit their own checkouts
@@ -116,17 +116,16 @@ POST methods to create new objects. Default is False
     anon_get_allowed = False
     member_post_allowed = False
 
-    def __init__(self, model):
+    def __init__(self):
         """
         Initiate GroupAPI
         """
-        self.model = model
 
         # TODO: Validators validate a form before it's committed to
         # the database. We don't have a validator... Wtf do we do?
         # Just ignore it? Maybe just try-except it if the DB complains
         # when we commit a model?
-        self.validator = generate_validator(model, create=True)
+        #self.validator = generate_validator(model, create=True)
 
     def get(self):
         member = get_current_member()
@@ -134,11 +133,11 @@ POST methods to create new objects. Default is False
 
         if member is None:
             if self.anon_get_allowed:
-                return jsonify([item.to_json() for item in items])
+                return jsonify([item.to_dict() for item in items])
             else:
                 abort(403)
         elif member.is_admin:
-            return jsonify([item.to_json() for item in items])
+            return jsonify([item.to_dict() for item in items])
         else: # return items that belong to the current user
             items = items.filter_by(member_id=member.id)
 
@@ -150,7 +149,7 @@ POST methods to create new objects. Default is False
         item = self.model.from_json(request.json)
         db.session.add(item)
         db.session.commit()
-        return jsonify(item.to_json())
+        return jsonify(item.to_dict())
 
     # methods not allowed:
     def put(self):
@@ -214,12 +213,12 @@ class MemberGroupAPI(GroupAPI):             # /api/member
         items = self.model.query.all()
 
         if member is not None and member.is_admin:
-            return jsonify([item.to_json() for item in items])
+            return jsonify([item.to_dict() for item in items])
         else:
             abort(403)
 
 class MemberItemAPI(ItemAPI):               # /api/member/1
-    view_name = "member-group"
+    view_name = "member-item"
     model = models.Member
 
 #
@@ -233,7 +232,7 @@ def register_api(app):
         ConsumableItemAPI, MaintenanceTicketItemAPI, MemberItemAPI,
     ]:
         item_view = cl.as_view(cl.view_name)
-        app.add_url_route(f"/{cl.view_name[:cl.view_name.rfind("-")]}/<int:id>",
+        app.add_url_rule(f"/api/{cl.view_name[:cl.view_name.rfind("-")]}/<int:id>",
             view_func=item_view)
 
     # set up /api/someitem type routes
@@ -242,7 +241,7 @@ def register_api(app):
         ConsumableGroupAPI, MaintenanceTicketGroupAPI, MemberGroupAPI,
     ]:
         group_view = cl.as_view(cl.view_name)
-        app.add_url_route(f"/{cl.view_name[:cl.view_name.rfind("-")]}",
+        app.add_url_rule(f"/api/{cl.view_name[:cl.view_name.rfind("-")]}",
             view_func=group_view)
 
 register_api(app=app)

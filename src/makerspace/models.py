@@ -39,6 +39,15 @@ class Equipment(db.Model):
     id: Mapped[int] = mapped_column(db.Integer, primary_key=True)
     unique_name: Mapped[str] = mapped_column(db.String(50), unique=True, nullable=True)
     type_id: Mapped[int] = mapped_column(db.Integer, db.ForeignKey("equipment_type.id"))
+    type: Mapped[EquipmentType] = relationship(lazy="joined")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "unique_name": self.unique_name,
+            "type_id": self.type_id,
+            "type_name": self.type.name
+        }
 
 class ConsumableUnit(db.Model):
     __tablename__ = "consumable_unit"
