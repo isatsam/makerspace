@@ -8,9 +8,9 @@ from typing import Any
 # Helper functions
 #
 def get_current_member() -> Any|None:
-    '''
+    """
         Get the current Member model object from `request.cookies`
-    '''
+    """
     member_id = request.cookies.get("member_id")
     if member_id:
         result = db.session.execute(
@@ -26,15 +26,21 @@ def get_current_member() -> Any|None:
 #
 # ItemAPI: for /api/someitem/id (i.e. /api/equipment/1)
 class ItemAPI(MethodView):
-    init_every_request = False
+    """
+        A class for retrieving, modifying, and deleting individual objects. Is
+        inherited by subclasses responsible for API endpoints of type /api/something/<id>
+        (i.e. /api/equipment/1)
 
-    def __init__(self, model, anon_get_allowed=False):
-        """
-        Initiate ItemAPI
-        :param anon_get_allowed: If True, logged-out users are allowed to perform GET methods
-        """
-        self.model = model
-        self.anon_get_allowed = anon_get_allowed
+        Attributes:
+            anon_get_allowed (bool): Whether logged-out users are allowed to \
+perform GET methods (i.e. view items). Default is False
+            member_edit_allowed (bool): Whether members are allowed to perform \
+PATCH methods on objects that belong to them. Default is False
+    """
+    init_every_request = False
+    model = None
+    anon_get_allowed = False
+    member_edit_allowed = False
 
     def _get_item(self, id) -> Any:
         return self.model.query.get_or_404(id)
@@ -67,13 +73,23 @@ class ItemAPI(MethodView):
         except AttributeError: # if item does not have .member_id field
             return jsonify(item.to_json())
 
-    def patch(self, id=None):
-        raise NotImplemented # needs to be implemented in every view that inherits ItemAPI
+    def patch(self, id=None) -> Any:
+        # All members can edit their own checkouts
+        member = get_current_member()
+        if member is None:
+            abort(403)
+
+        if member.is_admin or \
+        (self.member_edit_allowed and member.id == id):
+            item = self._get_item(id) # TODO
+        else:
+            abort(403)
 
     def post(self, id=None):
         abort(405)
 
     def put(self, id=None):
+        # Put is universally admin-only
         member = get_current_member()
         if member is not None and member.is_admin:
             pass # TODO: maybe we need to move this to the views that inherit ItemAPI?
@@ -84,15 +100,27 @@ class ItemAPI(MethodView):
 def generate_validator(model, create):
     pass # TEMP
 class GroupAPI(MethodView):
-    init_every_request = False
+    """
+        A class for retrieving a list of all objects of a model, as well as creating new \
+objects in a model. It is inherited by subclasses responsible for API endpoints \
+of type /api/something (i.e. /api/equipment).
 
-    def __init__(self, model, anon_get_allowed=False):
+        Attributes:
+            anon_get_allowed (bool): Whether logged-out users are allowed to \
+perform GET methods (i.e. lists of view items). Default is False
+            member_edit_allowed (bool): Whether members are allowed to perform \
+POST methods to create new objects. Default is False
+    """
+    init_every_request = False
+    model = None
+    anon_get_allowed = False
+    member_post_allowed = False
+
+    def __init__(self, model):
         """
         Initiate GroupAPI
-        :param anon_get_allowed: If True, logged-out users are allowed to perform GET methods
         """
         self.model = model
-        self.anon_get_allowed = anon_get_allowed
 
         # TODO: Validators validate a form before it's committed to
         # the database. We don't have a validator... Wtf do we do?
@@ -111,7 +139,7 @@ class GroupAPI(MethodView):
                 abort(403)
         elif member.is_admin:
             return jsonify([item.to_json() for item in items])
-        else:
+        else: # return items that belong to the current user
             items = items.filter_by(member_id=member.id)
 
     def post(self):
@@ -135,84 +163,46 @@ class GroupAPI(MethodView):
         abort(405)
 
 
-# /api/equipment
-#   inherits from GroupAPI
-#   GET: return a list of all (member: OK, admin: OK)
-#   POST: create a new equipment (member: 403, admin: OK)
-#   PUT/PATCH/DELETE: not allowed (member: 405, admin: 405)
-class EquipmentGroupAPI(GroupAPI):
-    def __init__(self, model):
-        super().__init__(model, anon_get_allowed=True)
+class EquipmentGroupAPI(GroupAPI):          # `/api/equipment`
+    anon_get_allowed = True
 
-# /api/equipment/1
-#   inherits from ItemAPI
-#   GET: return the equipment piece with id 1 (member: OK, admin: OK)
-#   POST: not allowed (member: 405, admin: 405)
-#   PUT: update all fields (member: 403, admin: OK)
-#   PATCH: update specific fields (member: 403, admin: OK)
-#   DELETE: remove specific equipment (member: 403, admin: OK)
-class EquipmentItemAPI(ItemAPI):
-    def __init__(self, model):
-        super().__init__(model, anon_get_allowed=True)
+class EquipmentItemAPI(ItemAPI):            # `/api/equipment/1`
+    anon_get_allowed = True
 
-# /api/reservation
-#   same with /equipment
+class ReservationGroupAPI(GroupAPI)         # `/api/reservation`
+    pass
 
-# /api/reservation/1
-#   MEMBER ONLY OK IF THE RESERVATION BELONGS TO THEM!!!
-#   GET: return the reservation with id 1 (member: OK, admin: OK)
-#   POST: not allowed (member: 405, admin: 405)
-#   PUT: update all fields (member: 403, admin: OK)
-#   PATCH: update specific fields (member: OK, admin: OK)
-#   DELETE: remove specific reservation (member: OK, admin: OK)
+class ReservationItemAPI(ItemAPI):          # `/api/reservation/1`
+    pass
 
-# /api/checkout
-#   GET: return the list of all checkouts
-#       (member: only checkouts that belong to them; admin: all checkouts)
-#   POST: create a new checkout (member can only make a checkout that
-#       belongs to them, admin can freely set the member field)
-#   PUT/PATCH/DELETE: not allowed (member: 405, admin: 405)
+class CheckoutGroupAPI(GroupAPI):           # `/api/checkout`
+    pass
 
-# /api/checkout/1
-#   MEMBER ONLY OK IF THE CHECKOUT BELONGS TO THEM!!
-#   GET: return checkout with id 1 (member: OK, admin: OK)
-#   POST: not allowed (405)
-#   PUT: update all fields (members: 403, admin: OK)
-#   PATCH: update some fields (members: OK, admin: OK)
-#   DELETE: remove specific checkout record (members: 403, admin: OK)
+class CheckoutItemAPI(ItemAPI):             # `/api/checkout/1`
+    pass
 
-# /api/consumable
-#   GET: return list of consumables
-#   POST: create a new consumable
-#   PUT/PATCH/DELETE: not allowed (405)
+class ConsumableGroupAPI(GroupAPI):         # `/api/consumable`
+    pass
 
-# /api/consumable/1
-#   GET: data of one consumable
-#   POST: not allowed (405)
-#   PUT: update whole consumable (member: 403, admin: OK)
-#   PATCH: update speciifc fields (member: OK, admin: OK)
-#   DELETE: remove consumable (member: 403, admin: OK)
+class ConsumableItemAPI(ItemAPI):           # /api/consumable/1
+    pass
 
-# /api/maintenance
-#   GET: just basically the same as above you can figure it out
-#   POST:
-#   PUT/PATCH/DELETE:
+class MaintenanceTicketGroupAPI(GroupAPI):  # /api/maintenance
+    pass
 
-# /api/maintenance/1
-#   GET:
-#   POST:
-#   PUT:
-#   PATCH:
-#   DELETE:
+class MaintenanceTicketItemAPI(ItemAPI):    # /api/maintenance
+    pass
 
-# /api/member
-#   GET: get all members (admins: OK, members: 403)
-#   POST: create a new member (admins: OK, members: 403 - for now?)
-#   PUT/PATCH/DELETE: not allowed 405
+class MemberGroupAPI(GroupAPI):             # /api/member
+    def get(self):
+        # Override GroupAPI.get to only allow admins to view the list of members
+        member = get_current_member()
+        items = self.model.query.all()
 
-# /api/member/1
-#   GET: get member's data by ID 1 (admins: OK, members: only if getting own data)
-#   POST: not allowed (405)
-#   PUT: update whole member (admins: OK, members: 403)
-#   PATCH: update some fields (admins: OK, members: OK)
-#   DELETE: delete member's account (admins: OK, members: 403 for now? same as POST /api/member)
+        if member is not None and member.is_admin:
+            return jsonify([item.to_json() for item in items])
+        else:
+            abort(403)
+
+class MemberItemAPI(ItemAPI):               # /api/member/1
+    pass
