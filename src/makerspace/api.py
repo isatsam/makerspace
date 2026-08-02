@@ -28,8 +28,13 @@ def get_current_member() -> Any|None:
 class ItemAPI(MethodView):
     init_every_request = False
 
-    def __init__(self, model):
+    def __init__(self, model, anon_get_allowed=False):
+        """
+        Initiate ItemAPI
+        :param anon_get_allowed: If True, logged-out users are allowed to perform GET methods
+        """
         self.model = model
+        self.anon_get_allowed = anon_get_allowed
 
     def _get_item(self, id) -> Any:
         return self.model.query.get_or_404(id)
@@ -45,11 +50,17 @@ class ItemAPI(MethodView):
         item = self._get_item(id)
         member = get_current_member()
 
-        if member is not None and member.is_admin:
+        if member is None:
+            if self.anon_get_allowed:
+                return jsonify(item.to_json())
+            else:
+                abort(403)
+
+        if member.is_admin:
             return jsonify(item.to_json())
 
         try: # if item has .member_id field
-            if member is not None and item.member_id == member.id:
+            if item.member_id == member.id:
                 return jsonify(item.to_json())
             else:
                 abort(403)
@@ -75,8 +86,13 @@ def generate_validator(model, create):
 class GroupAPI(MethodView):
     init_every_request = False
 
-    def __init__(self, model):
+    def __init__(self, model, anon_get_allowed=False):
+        """
+        Initiate GroupAPI
+        :param anon_get_allowed: If True, logged-out users are allowed to perform GET methods
+        """
         self.model = model
+        self.anon_get_allowed = anon_get_allowed
 
         # TODO: Validators validate a form before it's committed to
         # the database. We don't have a validator... Wtf do we do?
@@ -85,8 +101,18 @@ class GroupAPI(MethodView):
         self.validator = generate_validator(model, create=True)
 
     def get(self):
+        member = get_current_member()
         items = self.model.query.all()
-        return jsonify([item.to_json() for item in items])
+
+        if member is None:
+            if self.anon_get_allowed:
+                return jsonify([item.to_json() for item in items])
+            else:
+                abort(403)
+        elif member.is_admin:
+            return jsonify([item.to_json() for item in items])
+        else:
+            items = items.filter_by(member_id=member.id)
 
     def post(self):
         #errors = self.validator.validate(request.json)
@@ -98,12 +124,25 @@ class GroupAPI(MethodView):
         db.session.commit()
         return jsonify(item.to_json())
 
+    # methods not allowed:
+    def put(self):
+        abort(405)
+
+    def patch(self):
+        abort(405)
+
+    def delete(self):
+        abort(405)
+
 
 # /api/equipment
-#   inherits from GoupAPI
+#   inherits from GroupAPI
 #   GET: return a list of all (member: OK, admin: OK)
 #   POST: create a new equipment (member: 403, admin: OK)
 #   PUT/PATCH/DELETE: not allowed (member: 405, admin: 405)
+class EquipmentGroupAPI(GroupAPI):
+    def __init__(self, model):
+        super().__init__(model, anon_get_allowed=True)
 
 # /api/equipment/1
 #   inherits from ItemAPI
@@ -112,6 +151,9 @@ class GroupAPI(MethodView):
 #   PUT: update all fields (member: 403, admin: OK)
 #   PATCH: update specific fields (member: 403, admin: OK)
 #   DELETE: remove specific equipment (member: 403, admin: OK)
+class EquipmentItemAPI(ItemAPI):
+    def __init__(self, model):
+        super().__init__(model, anon_get_allowed=True)
 
 # /api/reservation
 #   same with /equipment
