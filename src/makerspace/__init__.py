@@ -13,10 +13,10 @@ app = Flask(__name__)
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 
-class Base(DeclarativeBase):
+class ModelBase(DeclarativeBase):
   pass
 
-db = SQLAlchemy(model_class=Base)
+db = SQLAlchemy(model_class=ModelBase)
 
 # SQLAlchemy-relevant Flask app configuration
 # See more: https://flask-sqlalchemy.readthedocs.io/en/stable/config/

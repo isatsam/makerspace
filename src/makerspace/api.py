@@ -7,7 +7,7 @@ from typing import Any
 #
 # Helper functions
 #
-def get_current_member() -> Any:
+def get_current_member() -> Any|None:
     '''
         Get the current Member model object from `request.cookies`
     '''
@@ -20,12 +20,93 @@ def get_current_member() -> Any:
         return result
     return None
 
+#
+# Generic views that we can use for all others
+# Based on example code from: https://flask.palletsprojects.com/en/stable/views/
+#
+# ItemAPI: for /api/someitem/id (i.e. /api/equipment/1)
+class ItemAPI(MethodView):
+    init_every_request = False
+
+    def __init__(self, model):
+        self.model = model
+
+    def _get_item(self, id) -> Any:
+        return self.model.query.get_or_404(id)
+
+    def delete(self, id=None):
+        item = self._get_item(id)
+        member = get_current_member()
+        if member is None or not member.is_admin:
+            abort(403)
+        # TODO: do something if member is admin
+
+    def get(self, id=None):
+        item = self._get_item(id)
+        member = get_current_member()
+
+        if member is not None and member.is_admin:
+            return jsonify(item.to_json())
+
+        try: # if item has .member_id field
+            if member is not None and item.member_id == member.id:
+                return jsonify(item.to_json())
+            else:
+                abort(403)
+        except AttributeError: # if item does not have .member_id field
+            return jsonify(item.to_json())
+
+    def patch(self, id=None):
+        raise NotImplemented # needs to be implemented in every view that inherits ItemAPI
+
+    def post(self, id=None):
+        abort(405)
+
+    def put(self, id=None):
+        member = get_current_member()
+        if member is not None and member.is_admin:
+            pass # TODO: maybe we need to move this to the views that inherit ItemAPI?
+        else:
+            abort(403)
+
+
+def generate_validator(model, create):
+    pass # TEMP
+class GroupAPI(MethodView):
+    init_every_request = False
+
+    def __init__(self, model):
+        self.model = model
+
+        # TODO: Validators validate a form before it's committed to
+        # the database. We don't have a validator... Wtf do we do?
+        # Just ignore it? Maybe just try-except it if the DB complains
+        # when we commit a model?
+        self.validator = generate_validator(model, create=True)
+
+    def get(self):
+        items = self.model.query.all()
+        return jsonify([item.to_json() for item in items])
+
+    def post(self):
+        #errors = self.validator.validate(request.json)
+        #if errors:
+        #    return jsonify(errors), 400
+
+        item = self.model.from_json(request.json)
+        db.session.add(item)
+        db.session.commit()
+        return jsonify(item.to_json())
+
+
 # /api/equipment
+#   inherits from GoupAPI
 #   GET: return a list of all (member: OK, admin: OK)
 #   POST: create a new equipment (member: 403, admin: OK)
 #   PUT/PATCH/DELETE: not allowed (member: 405, admin: 405)
 
 # /api/equipment/1
+#   inherits from ItemAPI
 #   GET: return the equipment piece with id 1 (member: OK, admin: OK)
 #   POST: not allowed (member: 405, admin: 405)
 #   PUT: update all fields (member: 403, admin: OK)
