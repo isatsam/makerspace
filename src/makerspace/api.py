@@ -164,36 +164,39 @@ POST methods to create new objects. Default is False
 
 
 class EquipmentGroupAPI(GroupAPI):          # `/api/equipment`
+    model = models.Equipment
     anon_get_allowed = True
 
 class EquipmentItemAPI(ItemAPI):            # `/api/equipment/1`
+    model = models.Equipment
     anon_get_allowed = True
 
-class ReservationGroupAPI(GroupAPI)         # `/api/reservation`
-    pass
+class ReservationGroupAPI(GroupAPI):        # `/api/reservation`
+    model = models.Reservation
 
 class ReservationItemAPI(ItemAPI):          # `/api/reservation/1`
-    pass
+    model = models.Reservation
 
 class CheckoutGroupAPI(GroupAPI):           # `/api/checkout`
-    pass
+    model = models.Checkout
 
 class CheckoutItemAPI(ItemAPI):             # `/api/checkout/1`
-    pass
+    model = models.Checkout
 
 class ConsumableGroupAPI(GroupAPI):         # `/api/consumable`
-    pass
+    model = models.Consumable
 
 class ConsumableItemAPI(ItemAPI):           # /api/consumable/1
-    pass
+    model = models.Consumable
 
 class MaintenanceTicketGroupAPI(GroupAPI):  # /api/maintenance
-    pass
+    model = models.MaintenanceTicket
 
 class MaintenanceTicketItemAPI(ItemAPI):    # /api/maintenance
-    pass
+    model = models.MaintenanceTicket
 
 class MemberGroupAPI(GroupAPI):             # /api/member
+    model = models.Member
     def get(self):
         # Override GroupAPI.get to only allow admins to view the list of members
         member = get_current_member()
@@ -205,4 +208,4 @@ class MemberGroupAPI(GroupAPI):             # /api/member
             abort(403)
 
 class MemberItemAPI(ItemAPI):               # /api/member/1
-    pass
+    model = models.Member
