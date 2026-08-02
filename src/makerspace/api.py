@@ -1,5 +1,5 @@
 import models
-from makerspace import db
+from makerspace import db, app
 from flask import abort, jsonify, request
 from flask.views import MethodView
 from typing import Any
@@ -164,38 +164,49 @@ POST methods to create new objects. Default is False
 
 
 class EquipmentGroupAPI(GroupAPI):          # `/api/equipment`
+    view_name = "equipment-group"
     model = models.Equipment
     anon_get_allowed = True
 
 class EquipmentItemAPI(ItemAPI):            # `/api/equipment/1`
+    view_name = "equipment-item"
     model = models.Equipment
     anon_get_allowed = True
 
 class ReservationGroupAPI(GroupAPI):        # `/api/reservation`
+    view_name = "reservation-group"
     model = models.Reservation
 
 class ReservationItemAPI(ItemAPI):          # `/api/reservation/1`
+    view_name = "reservation-item"
     model = models.Reservation
 
 class CheckoutGroupAPI(GroupAPI):           # `/api/checkout`
+    view_name = "checkout-group"
     model = models.Checkout
 
 class CheckoutItemAPI(ItemAPI):             # `/api/checkout/1`
+    view_name = "checkout-item"
     model = models.Checkout
 
 class ConsumableGroupAPI(GroupAPI):         # `/api/consumable`
+    view_name = "consumable-group"
     model = models.Consumable
 
 class ConsumableItemAPI(ItemAPI):           # /api/consumable/1
+    view_name = "consumable-item"
     model = models.Consumable
 
 class MaintenanceTicketGroupAPI(GroupAPI):  # /api/maintenance
+    view_name = "maintenance-group"
     model = models.MaintenanceTicket
 
 class MaintenanceTicketItemAPI(ItemAPI):    # /api/maintenance
+    view_name = "maintenance-item"
     model = models.MaintenanceTicket
 
 class MemberGroupAPI(GroupAPI):             # /api/member
+    view_name = "member-group"
     model = models.Member
     def get(self):
         # Override GroupAPI.get to only allow admins to view the list of members
@@ -208,4 +219,30 @@ class MemberGroupAPI(GroupAPI):             # /api/member
             abort(403)
 
 class MemberItemAPI(ItemAPI):               # /api/member/1
+    view_name = "member-group"
     model = models.Member
+
+#
+# Finalise API by setting up routing
+#
+def register_api(app):
+
+    # set up /api/someitem/1 type routes
+    for cl in [
+        EquipmentItemAPI, ReservationItemAPI, CheckoutItemAPI,
+        ConsumableItemAPI, MaintenanceTicketItemAPI, MemberItemAPI,
+    ]:
+        item_view = cl.as_view(cl.view_name)
+        app.add_url_route(f"/{cl.view_name[:cl.view_name.rfind("-")]}/<int:id>",
+            view_func=item_view)
+
+    # set up /api/someitem type routes
+    for cl in [
+        EquipmentGroupAPI, ReservationGroupAPI, CheckoutGroupAPI,
+        ConsumableGroupAPI, MaintenanceTicketGroupAPI, MemberGroupAPI,
+    ]:
+        group_view = cl.as_view(cl.view_name)
+        app.add_url_route(f"/{cl.view_name[:cl.view_name.rfind("-")]}",
+            view_func=group_view)
+
+register_api(app=app)
