@@ -27,6 +27,18 @@ class Member(db.Model):
             "phone_number": self.phone_number
         }
 
+
+# see https://flask-sqlalchemy.readthedocs.io/en/stable/models/#defining-tables
+# Manually creating a table for a many-to-many relationship between
+# Consumable and Equipment
+# 1. Define association table FIRST (using string table names)
+consumable_equipment_m2m = db.Table(
+    "consumable_equipment",
+    Column("consumable_id", db.Integer, db.ForeignKey("consumable.id"), primary_key=True),
+    Column("equipment_id", db.Integer, db.ForeignKey("equipment.id"), primary_key=True)
+)
+
+
 class EquipmentType(db.Model):
     __tablename__ = "equipment_type"
     id: Mapped[int] = mapped_column(db.Integer, primary_key=True)
@@ -40,6 +52,7 @@ class Equipment(db.Model):
     unique_name: Mapped[str] = mapped_column(db.String(50), unique=True, nullable=True)
     type_id: Mapped[int] = mapped_column(db.Integer, db.ForeignKey("equipment_type.id"))
     type: Mapped[EquipmentType] = relationship(lazy="joined")
+    consumables = relationship("Consumable", secondary=consumable_equipment_m2m, back_populates="equipments")
 
     def to_dict(self):
         return {
@@ -62,15 +75,7 @@ class Consumable(db.Model):
     unit_id: Mapped[int] = mapped_column(db.Integer, db.ForeignKey("consumable_unit.id"))
     stock: Mapped[int] = mapped_column(db.Integer, default=0)
     low_stock_alert: Mapped[int] = mapped_column(db.Integer, default=0)
-
-# see https://flask-sqlalchemy.readthedocs.io/en/stable/models/#defining-tables
-# Manually creating a table for a many-to-many relationship between
-# Consumable and Equipment
-consumable_equipment_m2m = db.Table(
-    "consumable_equipment",
-    Column("consumable_id", db.ForeignKey(Consumable.id), primary_key=True),
-    Column("equipment_id", db.ForeignKey(Equipment.id), primary_key=True)
-)
+    equipments = relationship("Equipment", secondary=consumable_equipment_m2m, back_populates="consumables")
 
 class Reservation(db.Model):
     __tablename__ = "reservation"
