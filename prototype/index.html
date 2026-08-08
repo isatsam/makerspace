@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<head>
+    <title>IT299 Makerspace preview</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <script src="data.js" defer></script>
+    <script src="index.js" defer></script>
+    <script src="reserve.js" defer></script>
+</head>
+<body>
+    <header class="page-header flex">
+        <ul class="header-nav flex">
+            <li><a href="#">Reserve</a></li>
+            <li><a href="#">Check out</a></li>
+            <li><a href="#">All equipment</a></li>
+            <li><a href="#">All materials</a></li>
+            <li><a href="#">Maintenance tickets</a></li>
+        </ul>
+        <div class="hello flex">
+            <div>Hello, <span id="userName">Someone</span>!</div>
+            <ul class="header-nav flex">
+                <li><a href="#">My dashboard</a></li>
+                <li><a href="#">Account</a></li>
+                <li><a href="#">Log out</a></li>
+            </ul>
+        </div>
+    </header>
+    <div class="flex">
+    <main id="main">
+        <h1>Reserve makerspace's equipment</h1>
+    </main>
+    <aside class="user-data">
+        <div>
+            <h1>Your reservations</h1>
+            <table id="userReservations">
+            </table>
+            <p class="nothing-rn" id="userReservationsNothing">Nothing right now.</p>
+        </div>
+        <div>
+            <h1>Your checkouts</h1>
+            <table id="userCheckouts">
+            </table>
+            <p class="nothing-rn" id="userCheckoutsNothing">Nothing right now.</p>
+        </div>
+    </aside>
+    </div>
+    <div id="selectWindow" data-equipment-id="">
+        <h1>Reservation</h1>
+        <p>You are reserving: <span id="reserveName">something</span></p>
+        <p>Reservation start:
+            <input type="datetime-local" id="startTime">
+        </p>
+        <p>Reservation finish:
+            <input type="datetime-local" id="endTime">
+        </p>
+        <p id="selectWindowMessage" style="font-weight: 700"></p>
+        <p>
+        <button onclick="submitReserve(this)">Confirm</button>
+        <button onclick="closeReserveWindow()">Cancel</button>
+        </p>
+    </div>
+    <div id="successWindow">
+        <h1>Success!</h1>
+        <p>You've successfully reserved <span id="successName">something</span>
+            from <span id="successStart">sometime</span> to
+            <span id="successEnd">sometime</span>.
+        </p>
+        <button onclick="this.parentElement.style.display = 'none'">Confirm</button>
+    </div>
+</body>
