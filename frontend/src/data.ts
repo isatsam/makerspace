@@ -1,37 +1,5 @@
-// The data that we would normally receive from the API.
-// Typed port of the original prototype/data.js.
-
-export interface Equipment {
-  id: number;
-  unique_name: string;
-  type: string;
-}
-
-export interface UserReservation {
-  id: number;
-  equipment: string;
-}
-
-export interface UserCheckout {
-  id: number;
-  equipment: string;
-  status: string;
-  start_time: string;
-  end_time: string;
-}
-
-export interface UserData {
-  reservations: UserReservation[];
-  checkouts: UserCheckout[];
-}
-
-export interface Member {
-  id: number;
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone_number: string;
-}
+// The data that we would normally receive from the API
+import { Equipment, UserData, Member } from "./types.ts";
 
 export const equipment: Equipment[] = [
   {

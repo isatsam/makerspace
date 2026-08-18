@@ -8,6 +8,7 @@ import { equipment, user_data, member } from "./data";
 import { sortEquipmentTypes } from "./sortEquipment";
 import type { Reservation } from "./types";
 
+// reservation window
 type ReservationState =
   | { kind: "idle" }
   | { kind: "reserving"; equipmentId: number }
