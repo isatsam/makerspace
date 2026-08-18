@@ -10,9 +10,10 @@ import {
   fetchEquipment,
   fetchReservations,
   fetchCheckouts,
+  fetchCheckoutStatuses,
   createReservation,
 } from "./api";
-import type { Equipment, Reservation, Checkout, ReservationPayload, ResolvedUserData } from "./types";
+import type { Equipment, Reservation, Checkout, CheckoutStatus, ReservationPayload, ResolvedUserData } from "./types";
 
 type LoadState =
   | { kind: "loading" }
@@ -34,10 +35,13 @@ type ReservationState =
 function resolveUserData(
   reservations: Reservation[],
   checkouts: Checkout[],
-  equipmentById: Map<number, Equipment>
+  equipmentById: Map<number, Equipment>,
+  statusById: Map<number, CheckoutStatus>
 ): ResolvedUserData {
   const nameFor = (id: number) =>
     equipmentById.get(id)?.unique_name ?? `equipment #${id}`;
+  const statusFor = (id: number) =>
+    statusById.get(id)?.name ?? `status #${id}`;
 
   return {
     reservations: reservations.map((r) => ({
@@ -47,9 +51,7 @@ function resolveUserData(
     checkouts: checkouts.map((c) => ({
       id: c.id,
       equipment: nameFor(c.equipment_id),
-      // The API returns status_id; there is no /api/checkout_status endpoint,
-      // so we surface the raw id until that's exposed.
-      status: `status #${c.status_id}`,
+      status: statusFor(c.status_id),
       start_time: c.start_time,
       end_time: c.end_time,
     })),
@@ -70,14 +72,20 @@ function App() {
     let cancelled = false;
     setLoad({ kind: "loading" });
 
-    Promise.all([fetchEquipment(), fetchReservations(), fetchCheckouts()])
-      .then(([equipment, reservations, checkouts]) => {
+    Promise.all([
+      fetchEquipment(),
+      fetchReservations(),
+      fetchCheckouts(),
+      fetchCheckoutStatuses(),
+    ])
+      .then(([equipment, reservations, checkouts, statuses]) => {
         if (cancelled) return;
         const byId = new Map(equipment.map((e) => [e.id, e]));
+        const statusById = new Map(statuses.map((s) => [s.id, s]));
         setLoad({
           kind: "ready",
           equipment,
-          userData: resolveUserData(reservations, checkouts, byId),
+          userData: resolveUserData(reservations, checkouts, byId, statusById),
         });
       })
       .catch((err: unknown) => {

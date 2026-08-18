@@ -59,3 +59,9 @@ export interface ResolvedUserData {
     end_time: string;
   }[];
 }
+
+// GET /api/checkout_statuses  ->  CheckoutStatus.to_dict()
+export interface CheckoutStatus {
+  id: number;
+  name: string;
+}

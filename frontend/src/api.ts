@@ -7,6 +7,7 @@ import type {
   Equipment,
   Reservation,
   Checkout,
+  CheckoutStatus,
   ReservationPayload,
 } from "./types";
 
@@ -57,6 +58,13 @@ export function fetchReservations(): Promise<Reservation[]> {
 // checkouts for non-admins (so this returns "my checkouts").
 export function fetchCheckouts(): Promise<Checkout[]> {
   return request<Checkout[]>("/checkout");
+}
+
+// GET /api/checkout_statuses -> list of CheckoutStatus.to_dict().
+// Requires a logged-in member (no anon_get_allowed). Used to resolve the
+// status_id on checkouts into a human-readable status name.
+export function fetchCheckoutStatuses(): Promise<CheckoutStatus[]> {
+  return request<CheckoutStatus[]>("/checkout_statuses");
 }
 
 // POST /api/reservation — members are allowed to post their own reservations
