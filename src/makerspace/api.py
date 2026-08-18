@@ -359,8 +359,7 @@ def register_api(app):
     # set up /api/someitem type routes
     for cl in [
         EquipmentGroupAPI, ReservationGroupAPI, CheckoutGroupAPI,
-        ConsumableGroupAPI, MaintenanceTicketGroupAPI, MemberGroupAPI,
-        CheckoutStatusAPI
+        ConsumableGroupAPI, MaintenanceTicketGroupAPI, MemberGroupAPI
     ]:
         group_view = cl.as_view(cl.view_name)
         if "-" in cl.view_name:
