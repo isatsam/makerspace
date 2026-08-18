@@ -148,6 +148,7 @@ main {
     background-color: #ffffff;
     box-shadow: 15px 15px 15px #d9d9d9;
     padding: 25px;
+    z-index: 100;
 }
 
 #selectWindow>h1, #successWindow>h1 {
