@@ -1,6 +1,6 @@
 from . import models
-from makerspace import db, app
-from typing import List
+from makerspace import db, app, ModelBase # Modelbase imported for typing
+from typing import List, Type
 from flask import abort, jsonify, request
 from flask.views import MethodView
 from typing import Any
@@ -124,8 +124,6 @@ PATCH methods on objects that belong to them. Default is False
         return jsonify(item.to_dict())
 
 
-def generate_validator(model, create):
-    pass # TEMP
 class GroupAPI(MethodView):
     """
         A class for retrieving a list of all objects of a model, as well as creating new \
@@ -139,7 +137,7 @@ perform GET methods (i.e. lists of view items). Default is False
 POST methods to create new objects. Default is False
     """
     init_every_request = False
-    model = None
+    model: Type[ModelBase] | None = None
     anon_get_allowed = False
     member_post_allowed = False
     _immutable_fields: set[str] = {"id"}
@@ -164,6 +162,8 @@ POST methods to create new objects. Default is False
             items = self.model.query.filter_by(member_id=member.id).all()
 
     def post(self):
+        data = request.get_json(silent=True)
+
         item = self.model.from_json(request.json)
         db.session.add(item)
         db.session.commit()
