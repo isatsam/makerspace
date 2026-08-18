@@ -61,12 +61,14 @@ class EquipmentType(db.Model):
     name: Mapped[str] = mapped_column(db.String(30), unique=True, nullable=False)
     description: Mapped[str] = mapped_column(db.String(200), nullable=True)
     equipment: Mapped[List["Equipment"]] = relationship() # 1 type = many equipments
+    is_borrowable: Mapped[bool] = mapped_column(db.Boolean)
 
     def to_dict(self) -> dict:
         return {
             "id": self.id,
             "name": self.name,
             "description": self.description,
+            "is_borrowable": self.is_borrowable
         }
 
 class Equipment(db.Model):
