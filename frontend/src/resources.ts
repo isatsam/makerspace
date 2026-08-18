@@ -10,6 +10,10 @@ import {
   useEquipmentName,
   useMemberName,
   useStatusName,
+  useEquipmentTypeOptions,
+  useConsumableUnitOptions,
+  useTicketStatusOptions,
+  useStatusOptions,
 } from "./dataContext";
 
 // A field that can be displayed and (for admins) edited on a detail page.
@@ -65,7 +69,7 @@ export const equipmentConfig: ResourceConfig<Equipment> = {
   fields: [
     { key: "id", label: "ID", render: (e) => String(e.id) },
     { key: "unique_name", label: "Name", input: "text", creatable: true },
-    { key: "type_id", label: "Type ID", input: "number", creatable: true },
+    { key: "type_id", label: "Type", input: "select", creatable: true },
   ],
 };
 
@@ -87,7 +91,7 @@ export const consumableConfig: ResourceConfig<Consumable> = {
     { key: "name", label: "Name", input: "text", creatable: true },
     { key: "stock", label: "Stock", input: "number" },
     { key: "low_stock_alert", label: "Low-stock alert", input: "number" },
-    { key: "unit_id", label: "Unit", input: "number", creatable: true },
+    { key: "unit_id", label: "Unit", input: "select", creatable: true },
   ],
 };
 
@@ -155,7 +159,7 @@ export const maintenanceConfig: ResourceConfig<MaintenanceTicket> = {
     { key: "id", label: "ID", render: (t) => String(t.id) },
     { key: "equipment_id", label: "Equipment", input: "number", creatable: true },
     { key: "member_id", label: "Member", input: "number", creatable: true },
-    { key: "status_id", label: "Status", input: "number", creatable: true },
+    { key: "status_id", label: "Status", input: "select", creatable: true },
   ],
 };
 
@@ -193,6 +197,16 @@ export function useResolvedColumns<T>(
   const equipmentName = useEquipmentName();
   const memberName = useMemberName();
   const statusName = useStatusName();
+  const equipmentTypeName = useEquipmentTypeOptions();
+  const consumableUnitName = useConsumableUnitOptions();
+  const ticketStatusName = useTicketStatusOptions();
+
+  // Build a map from id -> name for each FK type so we can resolve
+  // the column renderers.
+  const typeById = new Map(equipmentTypeName.map((o) => [o.value, o.label]));
+  const unitById = new Map(consumableUnitName.map((o) => [o.value, o.label]));
+  const ticketById = new Map(ticketStatusName.map((o) => [o.value, o.label]));
+
   return config.columns.map((col) => {
     switch (col.key) {
       case "equipment_id":
@@ -201,8 +215,37 @@ export function useResolvedColumns<T>(
         return { ...col, render: (item: T) => memberName((item as unknown as { member_id: number }).member_id) };
       case "status_id":
         return { ...col, render: (item: T) => statusName((item as unknown as { status_id: number }).status_id) };
+      case "type_id":
+        return { ...col, render: (item: T) => typeById.get((item as unknown as { type_id: number }).type_id) ?? `type #${(item as unknown as { type_id: number }).type_id}` };
+      case "unit_id":
+        return { ...col, render: (item: T) => unitById.get((item as unknown as { unit_id: number }).unit_id) ?? `unit #${(item as unknown as { unit_id: number }).unit_id}` };
+      case "ticket_status_id":
+        return { ...col, render: (item: T) => ticketById.get((item as unknown as { status_id: number }).status_id) ?? `status #${(item as unknown as { status_id: number }).status_id}` };
       default:
         return col;
     }
   });
+}
+
+// Return the select options for a given FK field key, or undefined if
+// the field is not a select.
+export function useOptionsForField(key: string): { label: string; value: number }[] | undefined {
+  const equipmentTypeOptions = useEquipmentTypeOptions();
+  const consumableUnitOptions = useConsumableUnitOptions();
+  const ticketStatusOptions = useTicketStatusOptions();
+  const statusOptions = useStatusOptions();
+  switch (key) {
+    case "type_id":
+      return equipmentTypeOptions;
+    case "unit_id":
+      return consumableUnitOptions;
+    case "status_id":
+      // status_id can be checkout status or ticket status; we try both.
+      // The caller knows which one to use based on the resource.
+      return statusOptions;
+    case "ticket_status_id":
+      return ticketStatusOptions;
+    default:
+      return undefined;
+  }
 }

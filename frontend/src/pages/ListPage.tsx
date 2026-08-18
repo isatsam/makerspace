@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import type { ResourceConfig, FieldDef } from "../resources";
-import { useResolvedColumns } from "../resources";
-import { useSharedData, useStatusOptions } from "../dataContext";
+import { useResolvedColumns, useOptionsForField } from "../resources";
+import { useSharedData } from "../dataContext";
 import { createItem, ApiError } from "../api";
 
 interface ListPageProps<T> {
@@ -84,7 +84,6 @@ function AddWindow<T extends { id: number }>({
   config: ResourceConfig<T>;
   onClose: () => void;
 }) {
-  const statusOptions = useStatusOptions();
   const creatable = config.fields.filter((f) => f.creatable);
   const [values, setValues] = useState<Record<string, string>>({});
   const [message, setMessage] = useState("");
@@ -115,16 +114,20 @@ function AddWindow<T extends { id: number }>({
   return (
     <div id="selectWindow" style={{ display: "block" }}>
       <h1>New {config.singularTitle.toLowerCase()}</h1>
-      {creatable.map((f) => (
-        <p key={f.key}>
-          {f.label}:
-          <FieldInput
-            field={f.input === "select" && f.key === "status_id" ? { ...f, options: statusOptions } : f}
-            value={values[f.key] ?? ""}
-            onChange={(v) => setValues({ ...values, [f.key]: v })}
-          />
-        </p>
-      ))}
+      {creatable.map((f) => {
+        const options = f.input === "select" ? useOptionsForField(f.key) : undefined;
+        const fieldWithOpts = options ? { ...f, options } : f;
+        return (
+          <p key={f.key}>
+            {f.label}:
+            <FieldInput
+              field={fieldWithOpts}
+              value={values[f.key] ?? ""}
+              onChange={(v) => setValues({ ...values, [f.key]: v })}
+            />
+          </p>
+        );
+      })}
       <p id="selectWindowMessage" style={{ fontWeight: 700 }}>{message}</p>
       <p>
         <button onClick={handleSubmit}>Create</button>

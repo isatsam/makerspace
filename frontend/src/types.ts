@@ -83,3 +83,22 @@ export interface ResolvedUserData {
     end_time: string;
   }[];
 }
+
+// GET /api/equipment_type  ->  EquipmentType.to_dict()
+export interface EquipmentType {
+  id: number;
+  name: string;
+  description: string | null;
+}
+
+// GET /api/consumable_unit  ->  ConsumableUnit.to_dict()
+export interface ConsumableUnit {
+  id: number;
+  name: string | null;
+}
+
+// GET /api/ticket_status  ->  TicketStatus.to_dict()
+export interface TicketStatus {
+  id: number;
+  name: string;
+}

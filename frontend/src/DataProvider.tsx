@@ -8,12 +8,16 @@ import {
   fetchConsumables,
   fetchMaintenanceTickets,
   fetchMembers,
+  fetchEquipmentTypes,
+  fetchConsumableUnits,
+  fetchTicketStatuses,
 } from "./api";
 import type {
   Equipment,
   Reservation,
   Checkout,
   CheckoutStatus,
+
   Member,
   ResolvedUserData,
 } from "./types";
@@ -70,6 +74,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
       fetchCheckoutStatuses(),
       fetchConsumables(),
       fetchMaintenanceTickets(),
+      fetchEquipmentTypes(),
+      fetchConsumableUnits(),
+      fetchTicketStatuses(),
       membersPromise,
     ])
       .then(
@@ -80,6 +87,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
           statuses,
           consumables,
           maintenanceTickets,
+          equipmentTypes,
+          consumableUnits,
+          ticketStatuses,
           members,
         ]) => {
           if (cancelled) return;
@@ -92,8 +102,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
           const data: SharedData = {
             currentMember,
             equipmentById,
+            equipmentTypes,
             consumables,
+            consumableUnits,
             maintenanceTickets,
+            ticketStatuses,
             checkoutStatusById,
             membersById,
             reservations,

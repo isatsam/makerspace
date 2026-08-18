@@ -7,6 +7,9 @@ import type {
   Consumable,
   MaintenanceTicket,
   Member,
+  EquipmentType,
+  ConsumableUnit,
+  TicketStatus,
   ResolvedUserData,
 } from "./types";
 
@@ -16,8 +19,11 @@ export interface SharedData {
   currentMember: Member;
   // lookups keyed by id, built once from the lists
   equipmentById: Map<number, Equipment>;
+  equipmentTypes: EquipmentType[];
   consumables: Consumable[];
+  consumableUnits: ConsumableUnit[];
   maintenanceTickets: MaintenanceTicket[];
+  ticketStatuses: TicketStatus[];
   checkoutStatusById: Map<number, CheckoutStatus>;
   membersById: Map<number, Member>;
   // raw current-user lists (for the reservation/checkout list pages)
@@ -66,7 +72,11 @@ export type {
   Consumable,
   MaintenanceTicket,
   Member,
+  EquipmentType,
+  ConsumableUnit,
+  TicketStatus,
 };
+
 
 
 // Select options for the checkout status field, from the shared status map.
@@ -76,4 +86,20 @@ export function useStatusOptions(): { label: string; value: number }[] {
     label: s.name,
     value: s.id,
   }));
+}
+
+// Select options for FK fields resolved from the shared lookups.
+export function useEquipmentTypeOptions(): { label: string; value: number }[] {
+  const { equipmentTypes } = useSharedData();
+  return equipmentTypes.map((t) => ({ label: t.name, value: t.id }));
+}
+
+export function useConsumableUnitOptions(): { label: string; value: number }[] {
+  const { consumableUnits } = useSharedData();
+  return consumableUnits.map((u) => ({ label: u.name ?? "(unnamed)", value: u.id }));
+}
+
+export function useTicketStatusOptions(): { label: string; value: number }[] {
+  const { ticketStatuses } = useSharedData();
+  return ticketStatuses.map((s) => ({ label: s.name, value: s.id }));
 }

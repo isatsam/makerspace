@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import type { ResourceConfig } from "../resources";
-import { useSharedData, useStatusOptions } from "../dataContext";
+import { useSharedData } from "../dataContext";
+import { useOptionsForField } from "../resources";
 import { fetchItem, patchItem, deleteItem, ApiError } from "../api";
 import { FieldInput } from "./ListPage";
 
@@ -25,7 +26,6 @@ export function DetailPage<T extends { id: number }>({
 }: DetailPageProps<T>) {
   const { currentMember } = useSharedData();
   const isAdmin = currentMember.is_admin;
-  const statusOptions = useStatusOptions();
   const [state, setState] = useState<DetailState<T>>({ kind: "loading" });
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Record<string, string>>({});
@@ -116,10 +116,8 @@ export function DetailPage<T extends { id: number }>({
           {config.fields.map((f) => {
             const raw = (item as unknown as Record<string, unknown>)[f.key];
             const display = f.render ? f.render(item) : raw === null || raw === undefined ? "" : String(raw);
-            const fieldWithOpts =
-              f.input === "select" && f.key === "status_id"
-                ? { ...f, options: statusOptions }
-                : f;
+            const options = f.input === "select" ? useOptionsForField(f.key) : undefined;
+            const fieldWithOpts = options ? { ...f, options } : f;
             return (
               <tr key={f.key}>
                 <th>{f.label}</th>

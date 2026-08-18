@@ -11,6 +11,9 @@ import type {
   Consumable,
   MaintenanceTicket,
   Member,
+  EquipmentType,
+  ConsumableUnit,
+  TicketStatus,
   ReservationPayload,
 } from "./types";
 
@@ -62,6 +65,18 @@ export function fetchCheckouts(): Promise<Checkout[]> {
 
 export function fetchCheckoutStatuses(): Promise<CheckoutStatus[]> {
   return request<CheckoutStatus[]>("/checkout_statuses");
+}
+
+export function fetchEquipmentTypes(): Promise<EquipmentType[]> {
+  return request<EquipmentType[]>("/equipment_type");
+}
+
+export function fetchConsumableUnits(): Promise<ConsumableUnit[]> {
+  return request<ConsumableUnit[]>("/consumable_unit");
+}
+
+export function fetchTicketStatuses(): Promise<TicketStatus[]> {
+  return request<TicketStatus[]>("/ticket_status");
 }
 
 export function fetchConsumables(): Promise<Consumable[]> {
