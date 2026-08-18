@@ -117,53 +117,53 @@ PATCH methods on objects that belong to them. Default is False
     def post(self, id=None):
         abort(405)
 
-def put(self, id=None):
-    # PUT is universally admin-only and is a FULL replace: every settable
-    # column is set from the payload, and any settable column absent from
-    # the payload is reset to its column default (or None).
-    member = get_current_member()
-    if member is None or not member.is_admin:
-        abort(403)
+    def put(self, id=None):
+        # PUT is universally admin-only and is a FULL replace: every settable
+        # column is set from the payload, and any settable column absent from
+        # the payload is reset to its column default (or None).
+        member = get_current_member()
+        if member is None or not member.is_admin:
+            abort(403)
 
-    data = request.get_json(silent=True)
-    if not isinstance(data, dict):
-        abort(400, "Request body must be a JSON object")
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict):
+            abort(400, "Request body must be a JSON object")
 
-    item = self._get_item(id)
+        item = self._get_item(id)
 
-    # exclude relationships from list of columns
-    mapper = sa_inspect(self.model)
-    columns = {c.key: c for c in mapper.columns}
+        # exclude relationships from list of columns
+        mapper = sa_inspect(self.model)
+        columns = {c.key: c for c in mapper.columns}
 
-    # remove immutable fields from the list of settable fields
-    settable = columns.keys() - self._immutable_fields
+        # remove immutable fields from the list of settable fields
+        settable = columns.keys() - self._immutable_fields
 
-    # check that we're only attempting to  edit settable columns
-    unknown = data.keys() - columns.keys()
-    if unknown:
-        abort(400, f"Unknown or non-column field(s): {', '.join(sorted(unknown))}")
-    blocked = self._immutable_fields & data.keys()
-    if blocked:
-        abort(400, f"Cannot set immutable field(s): {', '.join(sorted(blocked))}")
+        # check that we're only attempting to  edit settable columns
+        unknown = data.keys() - columns.keys()
+        if unknown:
+            abort(400, f"Unknown or non-column field(s): {', '.join(sorted(unknown))}")
+        blocked = self._immutable_fields & data.keys()
+        if blocked:
+            abort(400, f"Cannot set immutable field(s): {', '.join(sorted(blocked))}")
 
-    for field in settable:
-        if field in data:
-            setattr(item, field, data[field])
-        else:
-            default = columns[field].default
-            if default is not None and default.arg is not None:
-                # default.arg may be a scalar or a callable (e.g. datetime.now).
-                setattr(item, field, default.arg() if callable(default.arg) else default.arg)
+        for field in settable:
+            if field in data:
+                setattr(item, field, data[field])
             else:
-                setattr(item, field, None)
+                default = columns[field].default
+                if default is not None and default.arg is not None:
+                    # default.arg may be a scalar or a callable (e.g. datetime.now).
+                    setattr(item, field, default.arg() if callable(default.arg) else default.arg)
+                else:
+                    setattr(item, field, None)
 
-    try:
-        db.session.commit()
-    except (db.IntegrityError, db.DataError) as err:
-        db.session.rollback()
-        abort(400, f"Database rejected the record, rolled back: {err.orig}")
+        try:
+            db.session.commit()
+        except (db.IntegrityError, db.DataError) as err:
+            db.session.rollback()
+            abort(400, f"Database rejected the record, rolled back: {err.orig}")
 
-    return jsonify(item.to_dict())
+        return jsonify(item.to_dict())
 
 class GroupAPI(MethodView):
     """
