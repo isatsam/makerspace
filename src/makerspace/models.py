@@ -62,6 +62,13 @@ class EquipmentType(db.Model):
     description: Mapped[str] = mapped_column(db.String(200), nullable=True)
     equipment: Mapped[List["Equipment"]] = relationship() # 1 type = many equipments
 
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+        }
+
 class Equipment(db.Model):
     __tablename__ = "equipment"
     id: Mapped[int] = mapped_column(db.Integer, primary_key=True)
@@ -94,6 +101,12 @@ class ConsumableUnit(db.Model):
     id: Mapped[int] = mapped_column(db.Integer, primary_key=True)
     name: Mapped[str] = mapped_column(db.String(20), unique=True, nullable=True)
     consumable: Mapped[List["Consumable"]] = relationship() # 1 unit = many consumables
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+        }
 
 class Consumable(db.Model):
     __tablename__ = "consumable"
@@ -169,6 +182,12 @@ class CheckoutStatus(db.Model):
     name: Mapped[str] = mapped_column(db.String(20), unique=True)
     checkout: Mapped[List["Checkout"]] = relationship() # 1 status = many checkouts
 
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name
+        }
+
 class Checkout(db.Model):
     __tablename__ = "checkout"
     id: Mapped[int] = mapped_column(db.Integer, primary_key=True)
@@ -212,6 +231,12 @@ class TicketStatus(db.Model):
     name: Mapped[str] = mapped_column(db.String(20), unique=True)
     ticket: Mapped[List["MaintenanceTicket"]] = relationship() # 1 status = many relationships
 
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+        }
+
 class MaintenanceTicket(db.Model):
     __tablename__ = "maintenance_ticket"
     id: Mapped[int] = mapped_column(db.Integer, primary_key=True)
@@ -219,11 +244,13 @@ class MaintenanceTicket(db.Model):
     member_id: Mapped[int] = mapped_column(db.Integer, db.ForeignKey("member.id", ondelete="CASCADE"))
     equipment_id: Mapped[int] = mapped_column(db.Integer, db.ForeignKey("equipment.id", ondelete="CASCADE"))
     creation_time: Mapped[datetime] = mapped_column(db.DateTime, default=datetime.now)
+    description: Mapped[str] = mapped_column(db.String)
 
-    def __init__(self, *, status_id: int, member_id: int, equipment_id: int) -> None:
+    def __init__(self, *, status_id: int, member_id: int, equipment_id: int, description: str) -> None:
         self.status_id = status_id
         self.member_id = member_id
         self.equipment_id = equipment_id
+        self.description = description
 
     def to_dict(self) -> dict:
         return {
@@ -232,6 +259,7 @@ class MaintenanceTicket(db.Model):
             "member_id": self.member_id,
             "equipment_id": self.equipment_id,
             "creation_time": self.creation_time.isoformat(),
+            "description": self.description
         }
 
     @classmethod
@@ -240,6 +268,7 @@ class MaintenanceTicket(db.Model):
             status_id=data["status_id"],
             member_id=data["member_id"],
             equipment_id=data["equipment_id"],
+            description=data["description"]
         )
 
 # note: doesnt handle migrations

@@ -81,13 +81,10 @@ PATCH methods on objects that belong to them. Default is False
         if member.is_admin:
             return jsonify(item.to_dict())
 
-        try: # if item has .member_id field
-            if item.member_id == member.id:
-                return jsonify(item.to_dict())
-            else:
-                abort(403)
-        except AttributeError: # if item does not have .member_id field
+        if (hasattr(item, "id") and item.id == member.id) or \
+            (hasattr(item, "member_id") and item.member_id == member.id):
             return jsonify(item.to_dict())
+        abort(403)
 
     def patch(self, id=None) -> Any:
         # All members can edit their own checkouts
@@ -117,53 +114,53 @@ PATCH methods on objects that belong to them. Default is False
     def post(self, id=None):
         abort(405)
 
-def put(self, id=None):
-    # PUT is universally admin-only and is a FULL replace: every settable
-    # column is set from the payload, and any settable column absent from
-    # the payload is reset to its column default (or None).
-    member = get_current_member()
-    if member is None or not member.is_admin:
-        abort(403)
+    def put(self, id=None):
+        # PUT is universally admin-only and is a FULL replace: every settable
+        # column is set from the payload, and any settable column absent from
+        # the payload is reset to its column default (or None).
+        member = get_current_member()
+        if member is None or not member.is_admin:
+            abort(403)
 
-    data = request.get_json(silent=True)
-    if not isinstance(data, dict):
-        abort(400, "Request body must be a JSON object")
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict):
+            abort(400, "Request body must be a JSON object")
 
-    item = self._get_item(id)
+        item = self._get_item(id)
 
-    # exclude relationships from list of columns
-    mapper = sa_inspect(self.model)
-    columns = {c.key: c for c in mapper.columns}
+        # exclude relationships from list of columns
+        mapper = sa_inspect(self.model)
+        columns = {c.key: c for c in mapper.columns}
 
-    # remove immutable fields from the list of settable fields
-    settable = columns.keys() - self._immutable_fields
+        # remove immutable fields from the list of settable fields
+        settable = columns.keys() - self._immutable_fields
 
-    # check that we're only attempting to  edit settable columns
-    unknown = data.keys() - columns.keys()
-    if unknown:
-        abort(400, f"Unknown or non-column field(s): {', '.join(sorted(unknown))}")
-    blocked = self._immutable_fields & data.keys()
-    if blocked:
-        abort(400, f"Cannot set immutable field(s): {', '.join(sorted(blocked))}")
+        # check that we're only attempting to  edit settable columns
+        unknown = data.keys() - columns.keys()
+        if unknown:
+            abort(400, f"Unknown or non-column field(s): {', '.join(sorted(unknown))}")
+        blocked = self._immutable_fields & data.keys()
+        if blocked:
+            abort(400, f"Cannot set immutable field(s): {', '.join(sorted(blocked))}")
 
-    for field in settable:
-        if field in data:
-            setattr(item, field, data[field])
-        else:
-            default = columns[field].default
-            if default is not None and default.arg is not None:
-                # default.arg may be a scalar or a callable (e.g. datetime.now).
-                setattr(item, field, default.arg() if callable(default.arg) else default.arg)
+        for field in settable:
+            if field in data:
+                setattr(item, field, data[field])
             else:
-                setattr(item, field, None)
+                default = columns[field].default
+                if default is not None and default.arg is not None:
+                    # default.arg may be a scalar or a callable (e.g. datetime.now).
+                    setattr(item, field, default.arg() if callable(default.arg) else default.arg)
+                else:
+                    setattr(item, field, None)
 
-    try:
-        db.session.commit()
-    except (db.IntegrityError, db.DataError) as err:
-        db.session.rollback()
-        abort(400, f"Database rejected the record, rolled back: {err.orig}")
+        try:
+            db.session.commit()
+        except (db.IntegrityError, db.DataError) as err:
+            db.session.rollback()
+            abort(400, f"Database rejected the record, rolled back: {err.orig}")
 
-    return jsonify(item.to_dict())
+        return jsonify(item.to_dict())
 
 class GroupAPI(MethodView):
     """
@@ -264,7 +261,6 @@ class EquipmentItemAPI(ItemAPI):            # `/api/equipment/1`
 class ReservationGroupAPI(GroupAPI):        # `/api/reservation`
     view_name = "reservation-group"
     model = models.Reservation
-    _immutable_fields = {"id", "member_id"}
     member_post_allowed = True
 
 class ReservationItemAPI(ItemAPI):          # `/api/reservation/1`
@@ -276,7 +272,6 @@ class ReservationItemAPI(ItemAPI):          # `/api/reservation/1`
 class CheckoutGroupAPI(GroupAPI):           # `/api/checkout`
     view_name = "checkout-group"
     model = models.Checkout
-    _immutable_fields = {"id", "member_id", "equipment_id"}
     member_post_allowed = True
 
 class CheckoutItemAPI(ItemAPI):             # `/api/checkout/1`
@@ -321,8 +316,28 @@ class MemberGroupAPI(GroupAPI):             # /api/member
 class MemberItemAPI(ItemAPI):               # /api/member/1
     view_name = "member-item"
     model = models.Member
-    _immutable_fields = {"id", "is_admin"}
+    _immutable_fields = {"id"}
     member_edit_allowed = True
+
+#
+# "Helper" endpoints
+#
+class CheckoutStatusAPI(GroupAPI):
+    view_name = "checkout_statuses"
+    model = models.CheckoutStatus
+
+class EquipmentTypeAPI(GroupAPI):
+    view_name = "equipment_type"
+    model = models.EquipmentType
+
+class ConsumableUnitAPI(GroupAPI):
+    view_name = "consumable_unit"
+    model = models.ConsumableUnit
+
+class TicketStatusAPI(GroupAPI):
+    view_name = "ticket_status"
+    model = models.TicketStatus
+
 
 #
 # Finalise API by setting up routing
@@ -341,10 +356,22 @@ def register_api(app):
     # set up /api/someitem type routes
     for cl in [
         EquipmentGroupAPI, ReservationGroupAPI, CheckoutGroupAPI,
-        ConsumableGroupAPI, MaintenanceTicketGroupAPI, MemberGroupAPI,
+        ConsumableGroupAPI, MaintenanceTicketGroupAPI, MemberGroupAPI
     ]:
         group_view = cl.as_view(cl.view_name)
-        app.add_url_rule(f"/api/{cl.view_name[:cl.view_name.rfind("-")]}",
+        if "-" in cl.view_name:
+            app.add_url_rule(f"/api/{cl.view_name[:cl.view_name.rfind("-")]}",
+                view_func=group_view)
+        else:
+            app.add_url_rule(f"/api/{cl.view_name}",
+                view_func=group_view)
+
+    # set up helper routes
+    for cl in [
+        CheckoutStatusAPI, EquipmentTypeAPI, ConsumableUnitAPI, TicketStatusAPI
+    ]:
+        group_view = cl.as_view(cl.view_name)
+        app.add_url_rule(f"/api/{cl.view_name}",
             view_func=group_view)
 
 register_api(app=app)
