@@ -50,8 +50,8 @@ class Member(db.Model):
 # 1. Define association table FIRST (using string table names)
 consumable_equipment_m2m = db.Table(
     "consumable_equipment",
-    Column("consumable_id", db.Integer, db.ForeignKey("consumable.id"), primary_key=True),
-    Column("equipment_id", db.Integer, db.ForeignKey("equipment.id"), primary_key=True)
+    Column("consumable_id", db.Integer, db.ForeignKey("consumable.id", ondelete="RESTRICT"), primary_key=True),
+    Column("equipment_id", db.Integer, db.ForeignKey("equipment.id", ondelete="RESTRICT"), primary_key=True)
 )
 
 
@@ -66,7 +66,7 @@ class Equipment(db.Model):
     __tablename__ = "equipment"
     id: Mapped[int] = mapped_column(db.Integer, primary_key=True)
     unique_name: Mapped[str | None] = mapped_column(db.String(50), unique=True, nullable=True)
-    type_id: Mapped[int] = mapped_column(db.Integer, db.ForeignKey("equipment_type.id"))
+    type_id: Mapped[int] = mapped_column(db.Integer, db.ForeignKey("equipment_type.id", ondelete="CASCADE"))
     type: Mapped[EquipmentType] = relationship(lazy="joined")
     consumables = relationship("Consumable", secondary=consumable_equipment_m2m, back_populates="equipments")
 
@@ -99,7 +99,7 @@ class Consumable(db.Model):
     __tablename__ = "consumable"
     id: Mapped[int] = mapped_column(db.Integer, primary_key=True)
     name: Mapped[str | None] = mapped_column(db.String(20), unique=True, nullable=True) # nullable=True is not right but we don't support migrations rn
-    unit_id: Mapped[int] = mapped_column(db.Integer, db.ForeignKey("consumable_unit.id"))
+    unit_id: Mapped[int] = mapped_column(db.Integer, db.ForeignKey("consumable_unit.id", ondelete="CASCADE"))
     stock: Mapped[int] = mapped_column(db.Integer, default=0)
     low_stock_alert: Mapped[int] = mapped_column(db.Integer, default=0)
     equipments = relationship("Equipment", secondary=consumable_equipment_m2m, back_populates="consumables")
@@ -133,8 +133,8 @@ class Consumable(db.Model):
 class Reservation(db.Model):
     __tablename__ = "reservation"
     id: Mapped[int] = mapped_column(db.Integer, primary_key=True)
-    equipment_id: Mapped[int] = mapped_column(db.Integer, db.ForeignKey("equipment.id"))
-    member_id: Mapped[int] = mapped_column(db.Integer, db.ForeignKey("member.id"))
+    equipment_id: Mapped[int] = mapped_column(db.Integer, db.ForeignKey("equipment.id", ondelete="CASCADE"))
+    member_id: Mapped[int] = mapped_column(db.Integer, db.ForeignKey("member.id", ondelete="CASCADE"))
     start_time: Mapped[datetime] = mapped_column(db.DateTime)
     end_time: Mapped[datetime] = mapped_column(db.DateTime)
 
@@ -172,9 +172,9 @@ class CheckoutStatus(db.Model):
 class Checkout(db.Model):
     __tablename__ = "checkout"
     id: Mapped[int] = mapped_column(db.Integer, primary_key=True)
-    equipment_id: Mapped[int] = mapped_column(db.Integer, db.ForeignKey("equipment.id"))
-    member_id: Mapped[int] = mapped_column(db.Integer, db.ForeignKey("member.id"))
-    status_id: Mapped[int] = mapped_column(db.Integer, db.ForeignKey("checkout_status.id"))
+    equipment_id: Mapped[int] = mapped_column(db.Integer, db.ForeignKey("equipment.id", ondelete="CASCADE"))
+    member_id: Mapped[int] = mapped_column(db.Integer, db.ForeignKey("member.id", ondelete="CASCADE"))
+    status_id: Mapped[int] = mapped_column(db.Integer, db.ForeignKey("checkout_status.id", ondelete="CASCADE"))
     start_time: Mapped[datetime] = mapped_column(db.DateTime)
     end_time: Mapped[datetime] = mapped_column(db.DateTime)
 
@@ -215,9 +215,9 @@ class TicketStatus(db.Model):
 class MaintenanceTicket(db.Model):
     __tablename__ = "maintenance_ticket"
     id: Mapped[int] = mapped_column(db.Integer, primary_key=True)
-    status_id: Mapped[int] = mapped_column(db.Integer, db.ForeignKey("ticket_status.id"))
-    member_id: Mapped[int] = mapped_column(db.Integer, db.ForeignKey("member.id"))
-    equipment_id: Mapped[int] = mapped_column(db.Integer, db.ForeignKey("equipment.id"))
+    status_id: Mapped[int] = mapped_column(db.Integer, db.ForeignKey("ticket_status.id", ondelete="CASCADE"))
+    member_id: Mapped[int] = mapped_column(db.Integer, db.ForeignKey("member.id", ondelete="CASCADE"))
+    equipment_id: Mapped[int] = mapped_column(db.Integer, db.ForeignKey("equipment.id", ondelete="CASCADE"))
     creation_time: Mapped[datetime] = mapped_column(db.DateTime, default=datetime.now)
 
     def __init__(self, *, status_id: int, member_id: int, equipment_id: int) -> None:

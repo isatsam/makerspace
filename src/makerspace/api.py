@@ -5,6 +5,7 @@ from flask import abort, jsonify, request
 from flask.views import MethodView
 from typing import Any
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy import inspect as sa_inspect
 
 #
 # Helper functions
@@ -61,8 +62,7 @@ PATCH methods on objects that belong to them. Default is False
             # ORM-side implementation of "ondelete=cascade"
             db.session.rollback()
             abort(409, f"Cannot delete: referenced by other records. {err.orig}")
-
-        db.session.delete(item)
+        return "", 204
 
     def get(self, id=None):
         item = self._get_item(id)
@@ -93,7 +93,8 @@ PATCH methods on objects that belong to them. Default is False
 
         item = self._get_item(id)
         if not member.is_admin and not \
-        (self.member_edit_allowed and member.id == item.member_id):
+        (self.member_edit_allowed and hasattr(self.model, "member_id")
+            and member.id == item.member_id):
             abort(403)
 
         data = request.get_json(silent=True)
@@ -112,26 +113,53 @@ PATCH methods on objects that belong to them. Default is False
     def post(self, id=None):
         abort(405)
 
-    def put(self, id=None):
-        # Put is universally admin-only
-        member = get_current_member()
-        if member is None or not member.is_admin:
-            abort(403)
+def put(self, id=None):
+    # PUT is universally admin-only and is a FULL replace: every settable
+    # column is set from the payload, and any settable column absent from
+    # the payload is reset to its column default (or None).
+    member = get_current_member()
+    if member is None or not member.is_admin:
+        abort(403)
 
-        data = request.get_json(silent=True)
-        if not isinstance(data, dict) or not data:
-            abort(400, "PATCH body must be a non-empty JSON object")
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        abort(400, "Request body must be a JSON object")
 
-        item = self._get_item(id)
-        for field, value in data.items():
-            if field in self._immutable_fields:
-                abort(400, f"Cannot change field {field}")
-            if not hasattr(item, field):
-                abort(400, f"Unknown field '{field}'")
-            setattr(item, field, value)
+    item = self._get_item(id)
+
+    # exclude relationships from list of columns
+    mapper = sa_inspect(self.model)
+    columns = {c.key: c for c in mapper.columns}
+
+    # remove immutable fields from the list of settable fields
+    settable = columns.keys() - self._immutable_fields
+
+    # check that we're only attempting to  edit settable columns
+    unknown = data.keys() - columns.keys()
+    if unknown:
+        abort(400, f"Unknown or non-column field(s): {', '.join(sorted(unknown))}")
+    blocked = self._immutable_fields & data.keys()
+    if blocked:
+        abort(400, f"Cannot set immutable field(s): {', '.join(sorted(blocked))}")
+
+    for field in settable:
+        if field in data:
+            setattr(item, field, data[field])
+        else:
+            default = columns[field].default
+            if default is not None and default.arg is not None:
+                # default.arg may be a scalar or a callable (e.g. datetime.now).
+                setattr(item, field, default.arg() if callable(default.arg) else default.arg)
+            else:
+                setattr(item, field, None)
+
+    try:
         db.session.commit()
-        return jsonify(item.to_dict())
+    except (db.IntegrityError, db.DataError) as err:
+        db.session.rollback()
+        abort(400, f"Database rejected the record, rolled back: {err.orig}")
 
+    return jsonify(item.to_dict())
 
 class GroupAPI(MethodView):
     """
@@ -168,7 +196,8 @@ POST methods to create new objects. Default is False
         elif member.is_admin:
             return jsonify([item.to_dict() for item in items])
         else: # return items that belong to the current user
-            items = self.model.query.filter_by(member_id=member.id).all()
+            if hasattr(self.model, "member_id"):
+                items = self.model.query.filter_by(member_id=member.id).all()
             return jsonify([item.to_dict() for item in items])
 
     def post(self):
@@ -232,25 +261,29 @@ class ReservationGroupAPI(GroupAPI):        # `/api/reservation`
     view_name = "reservation-group"
     model = models.Reservation
     _immutable_fields = {"id", "member_id"}
+    member_post_allowed = True
 
 class ReservationItemAPI(ItemAPI):          # `/api/reservation/1`
     view_name = "reservation-item"
     model = models.Reservation
     _immutable_fields = {"id", "member_id"}
+    member_edit_allowed = True
 
 class CheckoutGroupAPI(GroupAPI):           # `/api/checkout`
     view_name = "checkout-group"
     model = models.Checkout
+    _immutable_fields = {"id", "member_id", "equipment_id"}
+    member_post_allowed = True
 
 class CheckoutItemAPI(ItemAPI):             # `/api/checkout/1`
     view_name = "checkout-item"
     model = models.Checkout
     _immutable_fields = {"id", "member_id", "equipment_id"}
+    member_edit_allowed = True
 
 class ConsumableGroupAPI(GroupAPI):         # `/api/consumable`
     view_name = "consumable-group"
     model = models.Consumable
-    _immutable_fields = {"id", "member_id", "equipment_id"}
 
 class ConsumableItemAPI(ItemAPI):           # /api/consumable/1
     view_name = "consumable-item"
@@ -260,11 +293,13 @@ class MaintenanceTicketGroupAPI(GroupAPI):  # /api/maintenance
     view_name = "maintenance-group"
     model = models.MaintenanceTicket
     _immutable_fields = {"id", "member_id", "creation_time"}
+    member_post_allowed = True
 
 class MaintenanceTicketItemAPI(ItemAPI):    # /api/maintenance
     view_name = "maintenance-item"
     model = models.MaintenanceTicket
     _immutable_fields = {"id", "member_id", "creation_time"}
+    member_edit_allowed = True
 
 class MemberGroupAPI(GroupAPI):             # /api/member
     view_name = "member-group"
@@ -283,6 +318,7 @@ class MemberItemAPI(ItemAPI):               # /api/member/1
     view_name = "member-item"
     model = models.Member
     _immutable_fields = {"id", "is_admin"}
+    member_edit_allowed = True
 
 #
 # Finalise API by setting up routing
