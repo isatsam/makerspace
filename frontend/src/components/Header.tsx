@@ -26,7 +26,9 @@ function Header({ currentMember }: HeaderProps) {
         <li><Link to="/reservation">Reservations</Link></li>
         <li><Link to="/checkout">Checkouts</Link></li>
         <li><Link to="/maintenance">Maintenance tickets</Link></li>
-        <li><Link to="/member">Members</Link></li>
+        {currentMember.is_admin && (
+          <li><Link to="/member">Members</Link></li>
+        )}
       </ul>
       <div className="hello flex">
         <div>Hello, <span id="userName">{currentMember.first_name}</span>!</div>
