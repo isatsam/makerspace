@@ -1,15 +1,11 @@
 import { useState } from "react";
+import type { ReservationPayload } from "../types";
 
 interface ReserveWindowProps {
   equipmentId: number;
   equipmentName: string;
   memberId: number;
-  onConfirm: (reservation: {
-    equipment_id: number;
-    member_id: number;
-    start_time: string;
-    end_time: string;
-  }) => void;
+  onConfirm: (reservation: ReservationPayload) => void;
   onCancel: () => void;
 }
 

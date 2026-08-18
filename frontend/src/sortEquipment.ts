@@ -1,7 +1,7 @@
 import type { Equipment } from "./types";
 
-// Port of the original prototype/index.js sortEquipmentTypes().
-// Groups equipment by its `type` field, preserving insertion order.
+// Groups equipment by its type, preserving insertion order. The API returns
+// each equipment's type as `type_name` (Equipment.to_dict() in models.py).
 export interface EquipmentByType {
   type: string;
   items: { id: number; name: string }[];
@@ -12,11 +12,12 @@ export function sortEquipmentTypes(equipment: Equipment[]): EquipmentByType[] {
   const perType: Record<string, { id: number; name: string }[]> = {};
 
   equipment.forEach((eq) => {
-    if (!(eq.type in perType)) {
-      perType[eq.type] = [];
-      order.push(eq.type);
+    const type = eq.type_name ?? "(untyped)";
+    if (!(type in perType)) {
+      perType[type] = [];
+      order.push(type);
     }
-    perType[eq.type].push({ id: eq.id, name: eq.unique_name });
+    perType[type].push({ id: eq.id, name: eq.unique_name ?? "(unnamed)" });
   });
 
   return order.map((type) => ({ type, items: perType[type] }));

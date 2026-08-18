@@ -1,7 +1,7 @@
-import type { UserData } from "../types";
+import type { ResolvedUserData } from "../types";
 
 interface UserAsideProps {
-  data: UserData;
+  data: ResolvedUserData;
 }
 
 function UserAside({ data }: UserAsideProps) {
@@ -36,7 +36,7 @@ function UserAside({ data }: UserAsideProps) {
                 <td>
                   <a href={`/checkouts/${c.id}`}>{c.equipment}</a>
                 </td>
-                {c.status === "Overdue" ? (
+                {c.status.toLowerCase().includes("overdue") ? (
                   <td className="overdue">{c.status}</td>
                 ) : (
                   <td>Until {c.end_time}</td>
