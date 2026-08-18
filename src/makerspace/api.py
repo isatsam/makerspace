@@ -41,7 +41,7 @@ perform GET methods (i.e. view items). Default is False
 PATCH methods on objects that belong to them. Default is False
     """
     init_every_request = False
-    model = None
+    model: Type[ModelBase]
     anon_get_allowed = False
     member_edit_allowed = False
     _immutable_fields: set[str] = {"id"}
@@ -174,7 +174,7 @@ perform GET methods (i.e. lists of view items). Default is False
 POST methods to create new objects. Default is False
     """
     init_every_request = False
-    model: Type[ModelBase] | None = None
+    model: Type[ModelBase]
     anon_get_allowed = False
     member_post_allowed = False
     _immutable_fields: set[str] = {"id"}

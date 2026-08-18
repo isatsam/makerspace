@@ -11,10 +11,11 @@ app = Flask(__name__)
 # db.Model object -> to define models
 # db.session -> to execute queries
 from flask_sqlalchemy import SQLAlchemy
+from flask_sqlalchemy.model import Model
 from sqlalchemy.orm import DeclarativeBase
 
-class ModelBase(DeclarativeBase):
-  pass
+class ModelBase(Model, DeclarativeBase):
+    pass
 
 db = SQLAlchemy(model_class=ModelBase)
 
