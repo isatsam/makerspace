@@ -5,8 +5,8 @@ import { useSharedData } from "./dataContext";
 import { ListPage } from "./pages/ListPage";
 import { DetailPage } from "./pages/DetailPage";
 import { EquipmentDetailPage } from "./pages/EquipmentDetailPage";
+import { EquipmentListPage } from "./pages/EquipmentListPage";
 import {
-  equipmentConfig,
   consumableConfig,
   reservationConfig,
   checkoutConfig,
@@ -38,12 +38,7 @@ function ResourceListPage<T extends { id: number }>({
 
 // Convenience wrappers for each resource that source their list from the
 // shared data context.
-function EquipmentListPage() {
-  const { equipmentById } = useSharedData();
-  return (
-    <ResourceListPage config={equipmentConfig} items={[...equipmentById.values()]} />
-  );
-}
+// Equipment uses a custom list page with Reserve buttons.
 function ConsumableListPage() {
   const { consumables } = useSharedData();
   return <ResourceListPage config={consumableConfig} items={consumables} />;
