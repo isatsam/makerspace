@@ -323,7 +323,7 @@ class MemberGroupAPI(GroupAPI):             # /api/member
 class MemberItemAPI(ItemAPI):               # /api/member/1
     view_name = "member-item"
     model = models.Member
-    _immutable_fields = {"id", "is_admin"}
+    _immutable_fields = {"id"}
     member_edit_allowed = True
 
 #
