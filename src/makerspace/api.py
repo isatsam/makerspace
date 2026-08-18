@@ -81,13 +81,10 @@ PATCH methods on objects that belong to them. Default is False
         if member.is_admin:
             return jsonify(item.to_dict())
 
-        try: # if item has .member_id field
-            if item.member_id == member.id:
-                return jsonify(item.to_dict())
-            else:
-                abort(403)
-        except AttributeError: # if item does not have .member_id field
+        if (hasattr(item, "id") and item.id == member.id) or \
+            (hasattr(item, "member_id") and item.member_id == member.id):
             return jsonify(item.to_dict())
+        abort(403)
 
     def patch(self, id=None) -> Any:
         # All members can edit their own checkouts
