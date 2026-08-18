@@ -163,7 +163,7 @@ export const maintenanceConfig: ResourceConfig<MaintenanceTicket> = {
     { key: "id", label: "ID", render: (t) => String(t.id) },
     { key: "equipment_id", label: "Equipment", input: "select", creatable: true },
     { key: "member_id", label: "Member", render: (t) => String(t.member_id) },
-    { key: "status_id", label: "Status", input: "select", creatable: true },
+    { key: "status_id", label: "Status", input: "select" },
   ],
 };
 
