@@ -283,6 +283,10 @@ class CheckoutItemAPI(ItemAPI):             # `/api/checkout/1`
     _immutable_fields = {"id", "member_id", "equipment_id"}
     member_edit_allowed = True
 
+class CheckoutStatusAPI(GroupAPI):
+    view_name = "checkout_statuses"
+    model = models.CheckoutStatus
+
 class ConsumableGroupAPI(GroupAPI):         # `/api/consumable`
     view_name = "consumable-group"
     model = models.Consumable
@@ -340,6 +344,7 @@ def register_api(app):
     for cl in [
         EquipmentGroupAPI, ReservationGroupAPI, CheckoutGroupAPI,
         ConsumableGroupAPI, MaintenanceTicketGroupAPI, MemberGroupAPI,
+        CheckoutStatusAPI
     ]:
         group_view = cl.as_view(cl.view_name)
         app.add_url_rule(f"/api/{cl.view_name[:cl.view_name.rfind("-")]}",
