@@ -347,7 +347,11 @@ def register_api(app):
         CheckoutStatusAPI
     ]:
         group_view = cl.as_view(cl.view_name)
-        app.add_url_rule(f"/api/{cl.view_name[:cl.view_name.rfind("-")]}",
-            view_func=group_view)
+        if "-" in cl.view_name:
+            app.add_url_rule(f"/api/{cl.view_name[:cl.view_name.rfind("-")]}",
+                view_func=group_view)
+        else:
+            app.add_url_rule(f"/api/{cl.view_name}",
+                view_func=group_view)
 
 register_api(app=app)

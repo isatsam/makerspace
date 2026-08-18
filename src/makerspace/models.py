@@ -169,6 +169,12 @@ class CheckoutStatus(db.Model):
     name: Mapped[str] = mapped_column(db.String(20), unique=True)
     checkout: Mapped[List["Checkout"]] = relationship() # 1 status = many checkouts
 
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name
+        }
+
 class Checkout(db.Model):
     __tablename__ = "checkout"
     id: Mapped[int] = mapped_column(db.Integer, primary_key=True)
