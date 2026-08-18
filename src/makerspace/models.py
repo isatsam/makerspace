@@ -14,9 +14,9 @@ class Member(db.Model):
     last_name: Mapped[str | None] = mapped_column(db.String(30), unique=False, nullable=True)
     email: Mapped[str] = mapped_column(db.String(50), unique=True)
     phone_number: Mapped[str] = mapped_column(db.String(20), unique=True)
-    reservation: Mapped[List["Reservation"]] = relationship() # user can have many reservations
-    checkout: Mapped[List["Checkout"]] = relationship()
-    ticket: Mapped[List["MaintenanceTicket"]] = relationship()
+    reservation: Mapped[List["Reservation"]] = relationship(cascade="all, delete-orphan")
+    checkout: Mapped[List["Checkout"]]    = relationship(cascade="all, delete-orphan")
+    ticket: Mapped[List["MaintenanceTicket"]] = relationship(cascade="all, delete-orphan")
 
     def __init__(self, *, first_name: str, email: str, phone_number: str, last_name: str | None = None):
         # Boilerplate for @classmethod functions
@@ -70,7 +70,7 @@ class Equipment(db.Model):
     type: Mapped[EquipmentType] = relationship(lazy="joined")
     consumables = relationship("Consumable", secondary=consumable_equipment_m2m, back_populates="equipments")
 
-    def __init__(self, *, type_id: int, unique_name: str | None = "") -> None:
+    def __init__(self, *, type_id: int, unique_name: str | None = None) -> None:
         self.unique_name = unique_name
         self.type_id = type_id
 

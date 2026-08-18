@@ -4,6 +4,7 @@ from typing import List, Type
 from flask import abort, jsonify, request
 from flask.views import MethodView
 from typing import Any
+from sqlalchemy.orm import DeclarativeBase
 
 #
 # Helper functions
@@ -53,6 +54,14 @@ PATCH methods on objects that belong to them. Default is False
             abort(403)
 
         item = self._get_item(id)
+        try:
+            db.session.delete(item)
+            db.session.commit()
+        except db.IntegrityError as err:
+            # ORM-side implementation of "ondelete=cascade"
+            db.session.rollback()
+            abort(409, f"Cannot delete: referenced by other records. {err.orig}")
+
         db.session.delete(item)
 
     def get(self, id=None):
@@ -82,11 +91,11 @@ PATCH methods on objects that belong to them. Default is False
         if member is None:
             abort(403)
 
+        item = self._get_item(id)
         if not member.is_admin and not \
-        (self.member_edit_allowed and member.id == id):
+        (self.member_edit_allowed and member.id == item.member_id):
             abort(403)
 
-        item = self._get_item(id)
         data = request.get_json(silent=True)
         if not isinstance(data, dict) or not data:
             abort(400, "PATCH body must be a non-empty JSON object")
@@ -160,14 +169,43 @@ POST methods to create new objects. Default is False
             return jsonify([item.to_dict() for item in items])
         else: # return items that belong to the current user
             items = self.model.query.filter_by(member_id=member.id).all()
+            return jsonify([item.to_dict() for item in items])
 
     def post(self):
-        data = request.get_json(silent=True)
+        member = get_current_member()
+        if member is None or \
+        (not self.member_post_allowed and not member.is_admin):
+            abort(403)
 
-        item = self.model.from_json(request.json)
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict) or not data:
+            abort(400, "Request body must be a non-empty JSON object")
+
+        blocked = self._immutable_fields & data.keys()
+        if blocked:
+            abort(400, f"Trying to set immutable fields: {', '.join(sorted(blocked))}")
+
+        try:
+            item = self.model.from_json(data)
+        except (KeyError, TypeError, ValueError) as err:
+            # KeyError = missing required field
+            # TypeError = wrong type for a constructor argument
+            # ValueError = bad datetime / out-of-range
+            abort(400, f"Bad data: {err}")
+
         db.session.add(item)
-        db.session.commit()
-        return jsonify(item.to_dict())
+
+        # careful commit
+        try:
+            db.session.commit()
+        except db.IntegrityError as err:
+            db.session.rollback()
+            abort(400, f"Error writing to the database, rolled back: {err.orig}")
+        except db.DataError as err:
+            db.session.rollback()
+            abort(400, f"Bad data, rolled back: {err.orig}")
+
+        return jsonify(item.to_dict()), 201 # 201 HTTP Created
 
     # methods not allowed:
     def put(self):
@@ -207,10 +245,12 @@ class CheckoutGroupAPI(GroupAPI):           # `/api/checkout`
 class CheckoutItemAPI(ItemAPI):             # `/api/checkout/1`
     view_name = "checkout-item"
     model = models.Checkout
+    _immutable_fields = {"id", "member_id", "equipment_id"}
 
 class ConsumableGroupAPI(GroupAPI):         # `/api/consumable`
     view_name = "consumable-group"
     model = models.Consumable
+    _immutable_fields = {"id", "member_id", "equipment_id"}
 
 class ConsumableItemAPI(ItemAPI):           # /api/consumable/1
     view_name = "consumable-item"
