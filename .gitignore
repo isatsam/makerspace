@@ -5,6 +5,7 @@ dist
 dist-ssr
 tsconfig.tsbuildinfo
 *.local
+.vite
 
 # Logs
 logs
@@ -13,9 +14,3 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-
-# Editor
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
