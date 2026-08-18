@@ -7,6 +7,7 @@ export interface Equipment {
   unique_name: string | null;
   type_id: number;
   type_name: string;
+  type_is_borrowable: boolean;
 }
 
 // GET /api/member/<id>  ->  Member.to_dict()
@@ -71,6 +72,15 @@ export interface ReservationPayload {
   end_time: string;
 }
 
+// Payload to POST /api/checkout
+export interface CheckoutPayload {
+  equipment_id: number;
+  member_id: number;
+  status_id: number;
+  start_time: string;
+  end_time: string;
+}
+
 // Resolved view-model for the user's reservations/checkouts. Built in the
 // data provider from the raw API responses by resolving equipment_id ->
 // equipment name and status_id -> status name.
@@ -90,6 +100,7 @@ export interface EquipmentType {
   id: number;
   name: string;
   description: string | null;
+  is_borrowable: boolean;
 }
 
 // GET /api/consumable_unit  ->  ConsumableUnit.to_dict()

@@ -15,6 +15,7 @@ import type {
   ConsumableUnit,
   TicketStatus,
   ReservationPayload,
+  CheckoutPayload,
 } from "./types";
 
 const API_BASE = "/api";
@@ -96,6 +97,15 @@ export function createReservation(
   payload: ReservationPayload
 ): Promise<Reservation> {
   return request<Reservation>("/reservation", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function createCheckout(
+  payload: CheckoutPayload
+): Promise<Checkout> {
+  return request<Checkout>("/checkout", {
     method: "POST",
     body: JSON.stringify(payload),
   });

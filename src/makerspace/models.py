@@ -89,6 +89,7 @@ class Equipment(db.Model):
             "unique_name": self.unique_name,
             "type_id": self.type_id,
             "type_name": self.type.name,
+            "type_is_borrowable": self.type.is_borrowable,
         }
 
     @classmethod

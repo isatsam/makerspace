@@ -1,17 +1,19 @@
 import { useState } from "react";
 import { ReserveFlow } from "../components/ReserveFlow";
+import { CheckoutFlow } from "../components/CheckoutFlow";
 import { equipmentConfig } from "../resources";
 import { useSharedData } from "../dataContext";
 import type { Equipment } from "../types";
 
-// Custom list page for Equipment that adds a "Reserve" button column
-// and manages the ReserveFlow modal.
+// Custom list page for Equipment that adds a "Reserve" or "Check out" button column
+// and manages the ReserveFlow or CheckoutFlow modal.
 export function EquipmentListPage() {
   const { equipmentById, currentMember } = useSharedData();
   const items = [...equipmentById.values()];
-  const [reservingId, setReservingId] = useState<number | null>(null);
+  const [actionId, setActionId] = useState<number | null>(null);
+  const [isCheckout, setIsCheckout] = useState(false);
 
-  // Custom render for rows to add Reserve button
+  // Custom render for rows to add Reserve/Checkout button
   const renderRow = (item: Equipment) => {
     return (
       <tr data-item-id={item.id} key={item.id}>
@@ -31,23 +33,26 @@ export function EquipmentListPage() {
         <td>
           <button
             className="reserve-button"
-            onClick={() => setReservingId(item.id)}
+            onClick={() => {
+              setActionId(item.id);
+              setIsCheckout(item.type_is_borrowable);
+            }}
           >
-            Reserve
+            {item.type_is_borrowable ? "Check out" : "Reserve"}
           </button>
         </td>
       </tr>
     );
   };
 
-  const reservingItem = reservingId !== null ? items.find((e) => e.id === reservingId) : null;
+  const actionItem = actionId !== null ? items.find((e) => e.id === actionId) : null;
 
   return (
     <>
       <div className="page-title-row">
         <h1>{equipmentConfig.title}</h1>
         {currentMember.is_admin && (
-          <button className="reserve-button" onClick={() => setReservingId(null)}>
+          <button className="reserve-button" onClick={() => setActionId(null)}>
             Add new
           </button>
         )}
@@ -71,12 +76,20 @@ export function EquipmentListPage() {
         </table>
       )}
 
-      {reservingId !== null && reservingItem && (
-        <ReserveFlow
-          equipmentId={reservingId}
-          equipmentName={reservingItem.unique_name ?? ""}
+      {actionId !== null && actionItem && isCheckout && (
+        <CheckoutFlow
+          equipmentId={actionId}
+          equipmentName={actionItem.unique_name ?? ""}
           memberId={currentMember.id}
-          onClose={() => setReservingId(null)}
+          onClose={() => setActionId(null)}
+        />
+      )}
+      {actionId !== null && actionItem && !isCheckout && (
+        <ReserveFlow
+          equipmentId={actionId}
+          equipmentName={actionItem.unique_name ?? ""}
+          memberId={currentMember.id}
+          onClose={() => setActionId(null)}
         />
       )}
     </>
