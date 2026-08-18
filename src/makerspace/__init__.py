@@ -14,7 +14,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_sqlalchemy.model import Model
 from sqlalchemy.orm import DeclarativeBase
 
-class ModelBase(Model, DeclarativeBase):
+class ModelBase(DeclarativeBase):
     pass
 
 db = SQLAlchemy(model_class=ModelBase)
