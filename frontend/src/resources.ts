@@ -28,6 +28,8 @@ export interface FieldDef<T> {
   options?: { label: string; value: number }[];
   // Field is part of the create (POST) payload for admins.
   creatable?: boolean;
+  // Optional hook to get options for select fields (overrides default useOptionsForField)
+  getOptions?: () => { label: string; value: number }[];
 }
 
 // A column for the list page.
@@ -162,7 +164,7 @@ export const maintenanceConfig: ResourceConfig<MaintenanceTicket> = {
     { key: "id", label: "ID", render: (t) => String(t.id) },
     { key: "equipment_id", label: "Equipment", input: "number", creatable: true },
     { key: "member_id", label: "Member", input: "number", creatable: true },
-    { key: "status_id", label: "Status", input: "select", creatable: true },
+    { key: "status_id", label: "Status", input: "select", creatable: true, getOptions: useTicketStatusOptions },
   ],
 };
 
@@ -217,6 +219,10 @@ export function useResolvedColumns<T>(
       case "member_id":
         return { ...col, render: (item: T) => memberName((item as unknown as { member_id: number }).member_id) };
       case "status_id":
+        // For maintenance tickets, status_id refers to ticket_status; for checkouts, checkout_status
+        if (config.resource === "maintenance") {
+          return { ...col, render: (item: T) => ticketById.get((item as unknown as { status_id: number }).status_id) ?? `status #${(item as unknown as { status_id: number }).status_id}` };
+        }
         return { ...col, render: (item: T) => statusName((item as unknown as { status_id: number }).status_id) };
       case "type_id":
         return { ...col, render: (item: T) => typeById.get((item as unknown as { type_id: number }).type_id) ?? `type #${(item as unknown as { type_id: number }).type_id}` };
@@ -231,8 +237,13 @@ export function useResolvedColumns<T>(
 }
 
 // Return the select options for a given FK field key, or undefined if
-// the field is not a select.
-export function useOptionsForField(key: string): { label: string; value: number }[] | undefined {
+// the field is not a select. Also checks field.getOptions if present.
+export function useOptionsForField(key: string, field?: FieldDef<unknown>): { label: string; value: number }[] | undefined {
+  // If field has a custom getOptions hook, use it
+  if (field?.getOptions) {
+    return field.getOptions();
+  }
+  
   const equipmentTypeOptions = useEquipmentTypeOptions();
   const consumableUnitOptions = useConsumableUnitOptions();
   const ticketStatusOptions = useTicketStatusOptions();

@@ -117,7 +117,7 @@ function AddWindow<T extends { id: number }>({
     <div id="selectWindow" style={{ display: "block" }}>
       <h1>New {config.singularTitle.toLowerCase()}</h1>
       {creatable.map((f) => {
-        const options = f.input === "select" ? useOptionsForField(f.key) : undefined;
+        const options = f.input === "select" ? useOptionsForField(f.key, f as FieldDef<unknown>) : undefined;
         const fieldWithOpts = options ? { ...f, options } : f;
         return (
           <p key={f.key}>
