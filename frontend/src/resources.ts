@@ -10,6 +10,7 @@ import {
   useEquipmentName,
   useMemberName,
   useStatusName,
+  useEquipmentOptions,
   useEquipmentTypeOptions,
   useConsumableUnitOptions,
   useTicketStatusOptions,
@@ -28,8 +29,6 @@ export interface FieldDef<T> {
   options?: { label: string; value: number }[];
   // Field is part of the create (POST) payload for admins.
   creatable?: boolean;
-  // Optional hook to get options for select fields (overrides default useOptionsForField)
-  getOptions?: () => { label: string; value: number }[];
 }
 
 // A column for the list page.
@@ -162,9 +161,9 @@ export const maintenanceConfig: ResourceConfig<MaintenanceTicket> = {
   ],
   fields: [
     { key: "id", label: "ID", render: (t) => String(t.id) },
-    { key: "equipment_id", label: "Equipment", input: "number", creatable: true },
-    { key: "member_id", label: "Member", input: "number", creatable: true },
-    { key: "status_id", label: "Status", input: "select", creatable: true, getOptions: useTicketStatusOptions },
+    { key: "equipment_id", label: "Equipment", input: "select", creatable: true },
+    { key: "member_id", label: "Member", render: (t) => String(t.member_id) },
+    { key: "status_id", label: "Status", input: "select", creatable: true },
   ],
 };
 
@@ -237,25 +236,29 @@ export function useResolvedColumns<T>(
 }
 
 // Return the select options for a given FK field key, or undefined if
-// the field is not a select. Also checks field.getOptions if present.
-export function useOptionsForField(key: string, field?: FieldDef<unknown>): { label: string; value: number }[] | undefined {
-  // If field has a custom getOptions hook, use it
-  if (field?.getOptions) {
-    return field.getOptions();
-  }
-  
+// the field is not a select. For maintenance tickets, status_id uses ticket statuses.
+export function useOptionsForField(key: string, resource?: string): { label: string; value: number }[] | undefined {
+  const equipmentOptions = useEquipmentOptions();
   const equipmentTypeOptions = useEquipmentTypeOptions();
   const consumableUnitOptions = useConsumableUnitOptions();
   const ticketStatusOptions = useTicketStatusOptions();
   const statusOptions = useStatusOptions();
+  
+  // For maintenance tickets, status_id should use ticket statuses
+  if (resource === "maintenance" && key === "status_id") {
+    return ticketStatusOptions;
+  }
+  if (resource === "maintenance" && key === "equipment_id") {
+    return equipmentOptions;
+  }
+  
   switch (key) {
     case "type_id":
       return equipmentTypeOptions;
     case "unit_id":
       return consumableUnitOptions;
     case "status_id":
-      // status_id can be checkout status or ticket status; we try both.
-      // The caller knows which one to use based on the resource.
+      // Default to checkout statuses
       return statusOptions;
     case "ticket_status_id":
       return ticketStatusOptions;

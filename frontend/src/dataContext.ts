@@ -89,6 +89,14 @@ export function useStatusOptions(): { label: string; value: number }[] {
 }
 
 // Select options for FK fields resolved from the shared lookups.
+export function useEquipmentOptions(): { label: string; value: number }[] {
+  const { equipmentById } = useSharedData();
+  return [...equipmentById.values()].map((e) => ({
+    label: e.unique_name ?? `(unnamed)`,
+    value: e.id,
+  }));
+}
+
 export function useEquipmentTypeOptions(): { label: string; value: number }[] {
   const { equipmentTypes } = useSharedData();
   return equipmentTypes.map((t) => ({ label: t.name, value: t.id }));

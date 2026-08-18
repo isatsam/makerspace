@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import type { ResourceConfig, FieldDef } from "../resources";
+import type { ResourceConfig } from "../resources";
 import { useOptionsForField } from "../resources";
 import { fetchItem, patchItem, deleteItem, ApiError } from "../api";
 import { FieldInput } from "./ListPage";
@@ -117,7 +117,7 @@ export function DetailPage<T extends { id: number }>({
           {config.fields.map((f) => {
             const raw = (item as unknown as Record<string, unknown>)[f.key];
             const display = f.render ? f.render(item) : raw === null || raw === undefined ? "" : String(raw);
-            const options = f.input === "select" ? useOptionsForField(f.key, f as FieldDef<unknown>) : undefined;
+            const options = f.input === "select" ? useOptionsForField(f.key, config.resource) : undefined;
             const fieldWithOpts = options ? { ...f, options } : f;
             return (
               <tr key={f.key}>
