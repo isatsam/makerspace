@@ -1,199 +1,124 @@
-import { useEffect, useMemo, useState } from "react";
-import Header from "./components/Header";
-import EquipmentList from "./components/EquipmentList";
-import UserAside from "./components/UserAside";
-import ReserveWindow from "./components/ReserveWindow";
-import SuccessWindow from "./components/SuccessWindow";
-import { getCurrentMember } from "./currentMember";
-import { sortEquipmentTypes } from "./sortEquipment";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { DataProvider } from "./DataProvider";
+import { PageLayout } from "./PageLayout";
+import { useSharedData } from "./dataContext";
+import { ListPage } from "./pages/ListPage";
+import { DetailPage } from "./pages/DetailPage";
+import { EquipmentDetailPage } from "./pages/EquipmentDetailPage";
 import {
-  fetchEquipment,
-  fetchReservations,
-  fetchCheckouts,
-  fetchCheckoutStatuses,
-  createReservation,
-} from "./api";
-import type { Equipment, Reservation, Checkout, CheckoutStatus, ReservationPayload, ResolvedUserData } from "./types";
+  equipmentConfig,
+  consumableConfig,
+  reservationConfig,
+  checkoutConfig,
+  maintenanceConfig,
+  memberConfig,
+} from "./resources";
+import type { ResourceConfig } from "./resources";
+import type {
+  Consumable,
+  Reservation,
+  Checkout,
+  MaintenanceTicket,
+  Member,
+} from "./types";
 
-type LoadState =
-  | { kind: "loading" }
-  | { kind: "error"; message: string }
-  | {
-      kind: "ready";
-      equipment: Equipment[];
-      userData: ResolvedUserData;
-    };
+// A list page that pulls its items from the shared data (already fetched
+// once by the provider) instead of refetching.
+function ResourceListPage<T extends { id: number }>({
+  config,
+  items,
+}: {
+  config: ResourceConfig<T>;
+  items: T[];
+}) {
+  return (
+    <ListPage config={config} items={items} />
+  );
+}
 
-// Reservation modal flow.
-type ReservationState =
-  | { kind: "idle" }
-  | { kind: "reserving"; equipmentId: number }
-  | { kind: "success"; reservation: Reservation };
-
-// Map a raw Reservation/Checkout list + equipment lookup into the
-// resolved shape UserAside renders.
-function resolveUserData(
-  reservations: Reservation[],
-  checkouts: Checkout[],
-  equipmentById: Map<number, Equipment>,
-  statusById: Map<number, CheckoutStatus>
-): ResolvedUserData {
-  const nameFor = (id: number) =>
-    equipmentById.get(id)?.unique_name ?? `equipment #${id}`;
-  const statusFor = (id: number) =>
-    statusById.get(id)?.name ?? `status #${id}`;
-
-  return {
-    reservations: reservations.map((r) => ({
-      id: r.id,
-      equipment: nameFor(r.equipment_id),
-    })),
-    checkouts: checkouts.map((c) => ({
-      id: c.id,
-      equipment: nameFor(c.equipment_id),
-      status: statusFor(c.status_id),
-      start_time: c.start_time,
-      end_time: c.end_time,
-    })),
-  };
+// Convenience wrappers for each resource that source their list from the
+// shared data context.
+function EquipmentListPage() {
+  const { equipmentById } = useSharedData();
+  return (
+    <ResourceListPage config={equipmentConfig} items={[...equipmentById.values()]} />
+  );
+}
+function ConsumableListPage() {
+  const { consumables } = useSharedData();
+  return <ResourceListPage config={consumableConfig} items={consumables} />;
+}
+function ReservationListPage() {
+  const { reservations } = useSharedData();
+  return <ResourceListPage config={reservationConfig} items={reservations} />;
+}
+function CheckoutListPage() {
+  const { checkouts } = useSharedData();
+  return <ResourceListPage config={checkoutConfig} items={checkouts} />;
+}
+function MaintenanceListPage() {
+  const { maintenanceTickets } = useSharedData();
+  return (
+    <ResourceListPage config={maintenanceConfig} items={maintenanceTickets} />
+  );
+}
+function MemberListPage() {
+  const { membersById } = useSharedData();
+  return (
+    <ResourceListPage config={memberConfig} items={[...membersById.values()]} />
+  );
 }
 
 function App() {
-  const currentMember = getCurrentMember();
-  const [load, setLoad] = useState<LoadState>({ kind: "loading" });
-  const [reservationState, setReservationState] = useState<ReservationState>({
-    kind: "idle",
-  });
-
-  // Fetch equipment + the current member's reservations/checkouts on mount.
-  // Re-run whenever the logged-in member changes (the header switcher sets
-  // the member_id cookie and reloads, which re-runs this).
-  useEffect(() => {
-    let cancelled = false;
-    setLoad({ kind: "loading" });
-
-    Promise.all([
-      fetchEquipment(),
-      fetchReservations(),
-      fetchCheckouts(),
-      fetchCheckoutStatuses(),
-    ])
-      .then(([equipment, reservations, checkouts, statuses]) => {
-        if (cancelled) return;
-        const byId = new Map(equipment.map((e) => [e.id, e]));
-        const statusById = new Map(statuses.map((s) => [s.id, s]));
-        setLoad({
-          kind: "ready",
-          equipment,
-          userData: resolveUserData(reservations, checkouts, byId, statusById),
-        });
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        const message =
-          err instanceof Error ? err.message : "Failed to load data from the API.";
-        setLoad({ kind: "error", message });
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const groupedEquipment = useMemo(
-    () => (load.kind === "ready" ? sortEquipmentTypes(load.equipment) : []),
-    [load]
-  );
-
-  const equipmentById = useMemo(() => {
-    if (load.kind !== "ready") return new Map<number, Equipment>();
-    return new Map(load.equipment.map((e) => [e.id, e]));
-  }, [load]);
-
-  const startReserve = (equipmentId: number) => {
-    setReservationState({ kind: "reserving", equipmentId });
-  };
-
-  const submitReserve = (payload: ReservationPayload) => {
-    createReservation(payload)
-      .then((reservation) => {
-        setReservationState({ kind: "success", reservation });
-      })
-      .catch((err: unknown) => {
-        // Keep the modal open and surface the API error in the message line.
-        const message =
-          err instanceof Error ? err.message : "Failed to create reservation.";
-        setReservationState({
-          kind: "reserving",
-          equipmentId: payload.equipment_id,
-        });
-        // Surface the error via the modal's message via window alert fallback:
-        // the ReserveWindow manages its own message state, so we instead
-        // re-open after reload is avoided; simplest is to alert.
-        console.error("createReservation failed:", message);
-        alert(`Could not create reservation: ${message}`);
-      });
-  };
-
-  const closeReserveWindow = () => setReservationState({ kind: "idle" });
-
-  const onSuccessClose = () => {
-    // Reload so the freshly created reservation shows up in the aside.
-    window.location.reload();
-  };
-
   return (
-    <>
-      <Header currentMember={currentMember} />
-      <div className="flex">
-        {load.kind === "loading" && (
-          <main id="main">
-            <h1>Reserve makerspace's equipment</h1>
-            <p>Loading equipment…</p>
-          </main>
-        )}
-        {load.kind === "error" && (
-          <main id="main">
-            <h1>Reserve makerspace's equipment</h1>
-            <p>Could not load data: {load.message}</p>
-            <p>Make sure the Flask API is running on :5000 and that the
-              selected member exists in the database.</p>
-          </main>
-        )}
-        {load.kind === "ready" && (
-          <>
-            <EquipmentList groups={groupedEquipment} onReserve={startReserve} />
-            <UserAside data={load.userData} />
-          </>
-        )}
-      </div>
-
-      {reservationState.kind === "reserving" && (
-        <ReserveWindow
-          equipmentId={reservationState.equipmentId}
-          equipmentName={
-            equipmentById.get(reservationState.equipmentId)?.unique_name ??
-            "something"
-          }
-          memberId={currentMember.id}
-          onConfirm={submitReserve}
-          onCancel={closeReserveWindow}
-        />
-      )}
-
-      {reservationState.kind === "success" && (
-        <SuccessWindow
-          equipmentName={
-            equipmentById.get(reservationState.reservation.equipment_id)
-              ?.unique_name ?? "something"
-          }
-          start={reservationState.reservation.start_time}
-          end={reservationState.reservation.end_time}
-          onClose={onSuccessClose}
-        />
-      )}
-    </>
+    <DataProvider>
+      <PageLayout>
+        <Routes>
+          <Route path="/" element={<Navigate to="/equipment" replace />} />
+          <Route path="/equipment" element={<EquipmentListPage />} />
+          <Route path="/equipment/:id" element={<EquipmentDetailRoute />} />
+          <Route path="/consumable" element={<ConsumableListPage />} />
+          <Route path="/consumable/:id" element={<ConsumableDetailRoute />} />
+          <Route path="/reservation" element={<ReservationListPage />} />
+          <Route path="/reservation/:id" element={<ReservationDetailRoute />} />
+          <Route path="/checkout" element={<CheckoutListPage />} />
+          <Route path="/checkout/:id" element={<CheckoutDetailRoute />} />
+          <Route path="/maintenance" element={<MaintenanceListPage />} />
+          <Route path="/maintenance/:id" element={<MaintenanceDetailRoute />} />
+          <Route path="/member" element={<MemberListPage />} />
+          <Route path="/member/:id" element={<MemberDetailRoute />} />
+        </Routes>
+      </PageLayout>
+    </DataProvider>
   );
+}
+
+// Detail routes pull the :id param and feed it into the right DetailPage.
+import { useParams } from "react-router-dom";
+
+function EquipmentDetailRoute() {
+  const { id } = useParams();
+  return <EquipmentDetailPage id={id!} />;
+}
+function ConsumableDetailRoute() {
+  const { id } = useParams();
+  return <DetailPage<Consumable> config={consumableConfig} id={id!} />;
+}
+function ReservationDetailRoute() {
+  const { id } = useParams();
+  return <DetailPage<Reservation> config={reservationConfig} id={id!} />;
+}
+function CheckoutDetailRoute() {
+  const { id } = useParams();
+  return <DetailPage<Checkout> config={checkoutConfig} id={id!} />;
+}
+function MaintenanceDetailRoute() {
+  const { id } = useParams();
+  return <DetailPage<MaintenanceTicket> config={maintenanceConfig} id={id!} />;
+}
+function MemberDetailRoute() {
+  const { id } = useParams();
+  return <DetailPage<Member> config={memberConfig} id={id!} />;
 }
 
 export default App;

@@ -38,17 +38,41 @@ export interface Checkout {
   end_time: string; // ISO 8601
 }
 
+// GET /api/checkout_statuses  ->  CheckoutStatus.to_dict()
+export interface CheckoutStatus {
+  id: number;
+  name: string;
+}
+
+// GET /api/consumable  ->  Consumable.to_dict()
+export interface Consumable {
+  id: number;
+  name: string | null;
+  unit_id: number;
+  stock: number;
+  low_stock_alert: number;
+}
+
+// GET /api/maintenance  ->  MaintenanceTicket.to_dict()
+export interface MaintenanceTicket {
+  id: number;
+  status_id: number;
+  member_id: number;
+  equipment_id: number;
+  creation_time: string; // ISO 8601
+}
+
 // Payload to POST /api/reservation (Reservation.from_json)
 export interface ReservationPayload {
   equipment_id: number;
   member_id: number;
-  start_time: string; // ISO 8601 (datetime-local is accepted by fromisoformat)
-  end_time: string; // ISO 8601
+  start_time: string;
+  end_time: string;
 }
 
-
-// Resolved view-model for the user's reservations/checkouts. Built in App
-// from the raw API responses by resolving equipment_id -> equipment name.
+// Resolved view-model for the user's reservations/checkouts. Built in the
+// data provider from the raw API responses by resolving equipment_id ->
+// equipment name and status_id -> status name.
 export interface ResolvedUserData {
   reservations: { id: number; equipment: string }[];
   checkouts: {
@@ -58,10 +82,4 @@ export interface ResolvedUserData {
     start_time: string;
     end_time: string;
   }[];
-}
-
-// GET /api/checkout_statuses  ->  CheckoutStatus.to_dict()
-export interface CheckoutStatus {
-  id: number;
-  name: string;
 }

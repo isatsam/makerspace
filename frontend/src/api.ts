@@ -8,12 +8,15 @@ import type {
   Reservation,
   Checkout,
   CheckoutStatus,
+  Consumable,
+  MaintenanceTicket,
+  Member,
   ReservationPayload,
 } from "./types";
 
 const API_BASE = "/api";
 
-class ApiError extends Error {
+export class ApiError extends Error {
   status: number;
   constructor(status: number, message: string) {
     super(message);
@@ -43,32 +46,37 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-// GET /api/equipment — anon GET allowed, so this works for any visitor.
+// ----- Specific typed helpers for the current member's data -----
+
 export function fetchEquipment(): Promise<Equipment[]> {
   return request<Equipment[]>("/equipment");
 }
 
-// GET /api/reservation — GroupAPI.get filters to the current member's
-// reservations for non-admins (so this returns "my reservations").
 export function fetchReservations(): Promise<Reservation[]> {
   return request<Reservation[]>("/reservation");
 }
 
-// GET /api/checkout — GroupAPI.get filters to the current member's
-// checkouts for non-admins (so this returns "my checkouts").
 export function fetchCheckouts(): Promise<Checkout[]> {
   return request<Checkout[]>("/checkout");
 }
 
-// GET /api/checkout_statuses -> list of CheckoutStatus.to_dict().
-// Requires a logged-in member (no anon_get_allowed). Used to resolve the
-// status_id on checkouts into a human-readable status name.
 export function fetchCheckoutStatuses(): Promise<CheckoutStatus[]> {
   return request<CheckoutStatus[]>("/checkout_statuses");
 }
 
-// POST /api/reservation — members are allowed to post their own reservations
-// (ReservationGroupAPI.member_post_allowed). Returns the created reservation.
+export function fetchConsumables(): Promise<Consumable[]> {
+  return request<Consumable[]>("/consumable");
+}
+
+export function fetchMaintenanceTickets(): Promise<MaintenanceTicket[]> {
+  return request<MaintenanceTicket[]>("/maintenance");
+}
+
+// Members list is admin-only; non-admins will get a 403.
+export function fetchMembers(): Promise<Member[]> {
+  return request<Member[]>("/member");
+}
+
 export function createReservation(
   payload: ReservationPayload
 ): Promise<Reservation> {
@@ -78,4 +86,37 @@ export function createReservation(
   });
 }
 
-export { ApiError };
+// ----- Generic item CRUD used by the resource pages -----
+//
+// GroupAPI/ItemAPI expose a uniform shape: GET /<resource>/<id>, PATCH to
+// edit, DELETE to remove, POST to create on the group endpoint. These
+// generic helpers let the resource-config-driven pages work for any model.
+
+export function fetchItem<T>(resource: string, id: number | string): Promise<T> {
+  return request<T>(`/${resource}/${id}`);
+}
+
+export function patchItem<T>(
+  resource: string,
+  id: number | string,
+  changes: Record<string, unknown>
+): Promise<T> {
+  return request<T>(`/${resource}/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(changes),
+  });
+}
+
+export function deleteItem(resource: string, id: number | string): Promise<void> {
+  return request<void>(`/${resource}/${id}`, { method: "DELETE" });
+}
+
+export function createItem<T>(
+  resource: string,
+  payload: Record<string, unknown>
+): Promise<T> {
+  return request<T>(`/${resource}`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}

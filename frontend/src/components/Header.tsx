@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { members } from "../data";
 import type { ChangeEvent } from "react";
 import { setCurrentMemberCookie } from "../currentMember";
@@ -20,18 +21,17 @@ function Header({ currentMember }: HeaderProps) {
   return (
     <header className="page-header flex">
       <ul className="header-nav flex">
-        <li><a href="#">Reserve</a></li>
-        <li><a href="#">Check out</a></li>
-        <li><a href="#">All equipment</a></li>
-        <li><a href="#">All materials</a></li>
-        <li><a href="#">Maintenance tickets</a></li>
+        <li><Link to="/equipment">All equipment</Link></li>
+        <li><Link to="/consumable">All materials</Link></li>
+        <li><Link to="/reservation">Reservations</Link></li>
+        <li><Link to="/checkout">Checkouts</Link></li>
+        <li><Link to="/maintenance">Maintenance tickets</Link></li>
+        <li><Link to="/member">Members</Link></li>
       </ul>
       <div className="hello flex">
         <div>Hello, <span id="userName">{currentMember.first_name}</span>!</div>
         <ul className="header-nav flex">
-          <li><a href="#">My dashboard</a></li>
-          <li><a href="#">Account</a></li>
-          <li><a href="#">Log out</a></li>
+          <li><Link to={`/member/${currentMember.id}`}>Account</Link></li>
         </ul>
         <div>
           <label htmlFor="memberSwitcher" style={{ marginRight: 8, fontWeight: 600 }}>

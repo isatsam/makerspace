@@ -165,3 +165,46 @@ main {
     font-size: 0.9em;
     opacity: 0.85;
 }
+
+
+/* ---- Multi-page additions (list + detail pages) ---- */
+
+.page-title-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.equipment-table thead th,
+.equipment-table th {
+    text-align: left;
+    padding: 5px 15px;
+    font-weight: 600;
+    background-color: #D6E4C5;
+}
+
+.equipment-table th {
+    width: 200px;
+}
+
+.equipment-table a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.equipment-table a:hover {
+    text-decoration: underline;
+}
+
+main p a {
+    text-decoration: none;
+}
+
+main p a:hover {
+    text-decoration: underline;
+}
+
+/* keep the Add/Edit/Delete action buttons a little spaced */
+main p button {
+    margin-right: 4px;
+}
