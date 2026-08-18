@@ -1,5 +1,6 @@
 from . import models
 from makerspace import db, app
+from typing import List
 from flask import abort, jsonify, request
 from flask.views import MethodView
 from typing import Any
@@ -41,16 +42,18 @@ PATCH methods on objects that belong to them. Default is False
     model = None
     anon_get_allowed = False
     member_edit_allowed = False
+    _immutable_fields: set[str] = {"id"}
 
     def _get_item(self, id) -> Any:
         return self.model.query.get_or_404(id)
 
     def delete(self, id=None):
-        item = self._get_item(id)
         member = get_current_member()
         if member is None or not member.is_admin:
             abort(403)
-        # TODO: do something if member is admin
+
+        item = self._get_item(id)
+        db.session.delete(item)
 
     def get(self, id=None):
         item = self._get_item(id)
@@ -79,11 +82,23 @@ PATCH methods on objects that belong to them. Default is False
         if member is None:
             abort(403)
 
-        if member.is_admin or \
+        if not member.is_admin and not \
         (self.member_edit_allowed and member.id == id):
-            item = self._get_item(id) # TODO
-        else:
             abort(403)
+
+        item = self._get_item(id)
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict) or not data:
+            abort(400, "PATCH body must be a non-empty JSON object")
+        # apply changes from the sent JSON
+        for field, value in data.items():
+            if field in self._immutable_fields:
+                abort(400, f"Cannot change field {field}")
+            if not hasattr(item, field): # gentle handling of unknown columns (400 not 500)
+                abort(400, f"Unknown field '{field}'")
+            setattr(item, field, value)
+        db.session.commit()
+        return jsonify(item.to_dict())
 
     def post(self, id=None):
         abort(405)
@@ -91,10 +106,22 @@ PATCH methods on objects that belong to them. Default is False
     def put(self, id=None):
         # Put is universally admin-only
         member = get_current_member()
-        if member is not None and member.is_admin:
-            pass # TODO: maybe we need to move this to the views that inherit ItemAPI?
-        else:
+        if member is None or not member.is_admin:
             abort(403)
+
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict) or not data:
+            abort(400, "PATCH body must be a non-empty JSON object")
+
+        item = self._get_item(id)
+        for field, value in data.items():
+            if field in self._immutable_fields:
+                abort(400, f"Cannot change field {field}")
+            if not hasattr(item, field):
+                abort(400, f"Unknown field '{field}'")
+            setattr(item, field, value)
+        db.session.commit()
+        return jsonify(item.to_dict())
 
 
 def generate_validator(model, create):
@@ -115,17 +142,12 @@ POST methods to create new objects. Default is False
     model = None
     anon_get_allowed = False
     member_post_allowed = False
+    _immutable_fields: set[str] = {"id"}
 
     def __init__(self):
         """
         Initiate GroupAPI
         """
-
-        # TODO: Validators validate a form before it's committed to
-        # the database. We don't have a validator... Wtf do we do?
-        # Just ignore it? Maybe just try-except it if the DB complains
-        # when we commit a model?
-        #self.validator = generate_validator(model, create=True)
 
     def get(self):
         member = get_current_member()
@@ -142,10 +164,6 @@ POST methods to create new objects. Default is False
             items = self.model.query.filter_by(member_id=member.id).all()
 
     def post(self):
-        #errors = self.validator.validate(request.json)
-        #if errors:
-        #    return jsonify(errors), 400
-
         item = self.model.from_json(request.json)
         db.session.add(item)
         db.session.commit()
@@ -175,10 +193,12 @@ class EquipmentItemAPI(ItemAPI):            # `/api/equipment/1`
 class ReservationGroupAPI(GroupAPI):        # `/api/reservation`
     view_name = "reservation-group"
     model = models.Reservation
+    _immutable_fields = {"id", "member_id"}
 
 class ReservationItemAPI(ItemAPI):          # `/api/reservation/1`
     view_name = "reservation-item"
     model = models.Reservation
+    _immutable_fields = {"id", "member_id"}
 
 class CheckoutGroupAPI(GroupAPI):           # `/api/checkout`
     view_name = "checkout-group"
@@ -199,10 +219,12 @@ class ConsumableItemAPI(ItemAPI):           # /api/consumable/1
 class MaintenanceTicketGroupAPI(GroupAPI):  # /api/maintenance
     view_name = "maintenance-group"
     model = models.MaintenanceTicket
+    _immutable_fields = {"id", "member_id", "creation_time"}
 
 class MaintenanceTicketItemAPI(ItemAPI):    # /api/maintenance
     view_name = "maintenance-item"
     model = models.MaintenanceTicket
+    _immutable_fields = {"id", "member_id", "creation_time"}
 
 class MemberGroupAPI(GroupAPI):             # /api/member
     view_name = "member-group"
@@ -220,6 +242,7 @@ class MemberGroupAPI(GroupAPI):             # /api/member
 class MemberItemAPI(ItemAPI):               # /api/member/1
     view_name = "member-item"
     model = models.Member
+    _immutable_fields = {"id", "is_admin"}
 
 #
 # Finalise API by setting up routing
