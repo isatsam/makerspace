@@ -1,0 +1,155 @@
+body {
+    margin: 0;
+    padding: 25px;
+    font-family: sans;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+.flex {
+    display: flex;
+    flex-flow: row nowrap;
+}
+
+/* ------------ Header ------------- */
+.page-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100vw;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 25px;
+    background-color: #d9d9d9;
+}
+
+.header-nav {
+    list-style: none;
+    gap: 25px;
+    margin: 0;
+    padding: 10px;
+}
+
+.page-header a:visited {
+    color: initial
+}
+
+.hello {
+    position: relative;
+    align-items: center;
+}
+
+#helloSubmenu {
+    display: none; /* toggled via JS */
+    position: absolute;
+    list-style: none;
+    padding: 15px;
+    min-width: 150px;
+    background-color: #d9d9d9;
+    box-shadow: 2px 2px 5px;
+    right: 0;
+}
+
+/* ----------- Main ------------- */
+
+main {
+    margin: 25px;
+    min-width: 800px;
+}
+
+.reserve-button {
+    background-color: #BAEB88;
+    border-radius: 25px;
+    border-color: transparent;
+    padding: 3px 8px;
+}
+
+.reserve-button:hover {
+    cursor: pointer;
+}
+
+.equipment-section {
+    width: 600px;
+    margin: 25px 0;
+}
+
+.equipment-section>h1 {
+    font-size: larger;
+    display: block;
+    padding: 5px 15px;
+    background-color: #D6E4C5;
+    margin: 0;
+}
+
+.equipment-table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.equipment-table tr {
+    display: flex;
+    padding: 5px 15px;
+    justify-content: space-between;
+}
+
+.equipment-table tr:nth-child(even) {
+    background-color: #f1f1f1;
+}
+
+/* ------------- Aside -------------- */
+.user-data {
+    margin-top: 50px;
+    width: 400px;
+}
+
+.user-data h1 {
+    font-size: larger;
+    display: block;
+    padding: 5px 15px;
+    background-color: #d9d9d9;
+    margin: 0;
+    font-weight: 600;
+}
+
+.nothing-rn {
+    display: none;
+    width: fit-content;
+    margin: 16px auto;
+    opacity: 75%;
+}
+
+.overdue {
+    color: red;
+}
+
+#userReservations, #userCheckouts {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+#userReservations tr,
+#userCheckouts tr {
+    display: flex;
+    padding: 5px 15px;
+    justify-content: space-between;
+}
+
+/* -------------- Selection ------------ */
+#selectWindow, #successWindow {
+    display: none;
+    position: absolute;
+    top: 15vh;
+    left: calc(50vw - 400px);
+    width: 800px;
+    height: fit-content;
+    background-color: #ffffff;
+    box-shadow: 15px 15px 15px #d9d9d9;
+    padding: 25px;
+}
+
+#selectWindow>h1, #successWindow>h1 {
+    font-size: larger;
+}
