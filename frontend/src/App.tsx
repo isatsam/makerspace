@@ -4,7 +4,8 @@ import EquipmentList from "./components/EquipmentList";
 import UserAside from "./components/UserAside";
 import ReserveWindow from "./components/ReserveWindow";
 import SuccessWindow from "./components/SuccessWindow";
-import { equipment, user_data, member } from "./data";
+import { equipment, user_data } from "./data";
+import { getCurrentMember } from "./currentMember";
 import { sortEquipmentTypes } from "./sortEquipment";
 import type { Reservation } from "./types";
 
@@ -17,6 +18,10 @@ type ReservationState =
 function App() {
   const groupedEquipment = useMemo(() => sortEquipmentTypes(equipment), []);
   const [state, setState] = useState<ReservationState>({ kind: "idle" });
+
+  // Naive "auth": which member are we logged in as? Driven by the member_id
+  // cookie, which the member switcher in the header sets before reloading.
+  const currentMember = getCurrentMember();
 
   const startReserve = (equipmentId: number) => {
     setState({ kind: "reserving", equipmentId });
@@ -32,7 +37,7 @@ function App() {
 
   return (
     <>
-      <Header firstName={member.first_name} />
+      <Header currentMember={currentMember} />
       <div className="flex">
         <EquipmentList groups={groupedEquipment} onReserve={startReserve} />
         <UserAside data={user_data} />
@@ -45,7 +50,7 @@ function App() {
             equipment.find((e) => e.id === state.equipmentId)?.unique_name ??
             "something"
           }
-          memberId={member.id}
+          memberId={currentMember.id}
           onConfirm={submitReserve}
           onCancel={closeReserveWindow}
         />

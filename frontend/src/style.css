@@ -153,3 +153,15 @@ main {
 #selectWindow>h1, #successWindow>h1 {
     font-size: larger;
 }
+
+
+/* ---- Member switcher (dev auth) ---- */
+#memberSwitcher {
+    margin: 0 8px;
+    padding: 3px 6px;
+}
+
+.hello label[for="memberSwitcher"] {
+    font-size: 0.9em;
+    opacity: 0.85;
+}

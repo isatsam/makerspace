@@ -1,4 +1,4 @@
-import type { Equipment } from "./data";
+import type { Equipment } from "./types";
 
 // Port of the original prototype/index.js sortEquipmentTypes().
 // Groups equipment by its `type` field, preserving insertion order.

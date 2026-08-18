@@ -59,10 +59,28 @@ export const user_data: UserData = {
   ],
 };
 
-export const member: Member = {
-  id: 5,
-  first_name: "Gus",
-  last_name: "Eiffel",
-  email: "gus.eiffel@students.purdue.edu",
-  phone_number: "081 734 2138",
-};
+// Hard-coded list of members we can "log in" as for local development.
+// The member_id cookie (read by get_current_member() in the Flask API)
+// is set to the selected member's id.
+export const members: Member[] = [
+  {
+    id: 1,
+    is_admin: true,
+    first_name: "Jane",
+    last_name: "Turing",
+    email: "jane.doe@purdue.edu",
+    phone_number: "081 123 0202",
+  },
+  {
+    id: 5,
+    is_admin: false,
+    first_name: "Gus",
+    last_name: "Eiffel",
+    email: "gus.eiffel@students.purdue.edu",
+    phone_number: "081 734 2138",
+  },
+];
+
+// Default current member (Gus). Can be overridden at runtime via the
+// member switcher in the header, which sets the `member_id` cookie.
+export const member: Member = members[1];

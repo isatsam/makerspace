@@ -26,6 +26,7 @@ export interface UserData {
 
 export interface Member {
   id: number;
+  is_admin: boolean;
   first_name: string;
   last_name: string;
   email: string;

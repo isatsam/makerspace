@@ -1,4 +1,4 @@
-import type { UserData } from "../data";
+import type { UserData } from "../types";
 
 interface UserAsideProps {
   data: UserData;
