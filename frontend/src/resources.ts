@@ -23,9 +23,9 @@ export interface FieldDef<T> {
   label: string;
   // How to render the value read-only.
   render?: (item: T) => string;
-  // Input type for editing. "text" | "number" | "datetime-local" | "select".
+  // Input type for editing. "text" | "number" | "datetime-local" | "select" | "textarea".
   // "select" uses `options` (label/value pairs) and sends the numeric value.
-  input?: "text" | "number" | "datetime-local" | "select";
+  input?: "text" | "number" | "datetime-local" | "select" | "textarea";
   options?: { label: string; value: number }[];
   // Field is part of the create (POST) payload for admins.
   creatable?: boolean;
@@ -164,6 +164,7 @@ export const maintenanceConfig: ResourceConfig<MaintenanceTicket> = {
     { key: "equipment_id", label: "Equipment", input: "select", creatable: true },
     { key: "member_id", label: "Member", render: (t) => String(t.member_id) },
     { key: "status_id", label: "Status", input: "select" },
+    { key: "description", label: "Description", input: "textarea", creatable: true },
   ],
 };
 

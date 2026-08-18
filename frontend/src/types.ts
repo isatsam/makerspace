@@ -60,6 +60,7 @@ export interface MaintenanceTicket {
   member_id: number;
   equipment_id: number;
   creation_time: string; // ISO 8601
+  description: string;
 }
 
 // Payload to POST /api/reservation (Reservation.from_json)

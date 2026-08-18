@@ -161,6 +161,16 @@ export function FieldInput<T>({
       </select>
     );
   }
+  if (field.input === "textarea") {
+    return (
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={4}
+        style={{ width: "100%", maxWidth: 400, marginTop: 4 }}
+      />
+    );
+  }
   if (field.input === "datetime-local") {
     // Convert ISO -> the value format <input type=datetime-local> expects.
     const v = value ? new Date(value).toISOString().slice(0, 16) : "";
