@@ -326,18 +326,18 @@ class MemberItemAPI(ItemAPI):               # /api/member/1
 # "Helper" endpoints
 #
 class CheckoutStatusAPI(GroupAPI):
-    view_name = "checkout_status"
+    view_name = "checkout_statuses"
     model = models.CheckoutStatus
 
 class EquipmentTypeAPI(GroupAPI):
     view_name = "equipment_type"
     model = models.EquipmentType
 
-def ConsumableUnitAPI(GroupAPI):
+class ConsumableUnitAPI(GroupAPI):
     view_name = "consumable_unit"
     model = models.ConsumableUnit
 
-def TicketStatusAPI(GroupAPI):
+class TicketStatusAPI(GroupAPI):
     view_name = "ticket_status"
     model = models.TicketStatus
 

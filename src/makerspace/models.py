@@ -62,6 +62,13 @@ class EquipmentType(db.Model):
     description: Mapped[str] = mapped_column(db.String(200), nullable=True)
     equipment: Mapped[List["Equipment"]] = relationship() # 1 type = many equipments
 
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+        }
+
 class Equipment(db.Model):
     __tablename__ = "equipment"
     id: Mapped[int] = mapped_column(db.Integer, primary_key=True)
@@ -94,6 +101,12 @@ class ConsumableUnit(db.Model):
     id: Mapped[int] = mapped_column(db.Integer, primary_key=True)
     name: Mapped[str] = mapped_column(db.String(20), unique=True, nullable=True)
     consumable: Mapped[List["Consumable"]] = relationship() # 1 unit = many consumables
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+        }
 
 class Consumable(db.Model):
     __tablename__ = "consumable"
@@ -217,6 +230,12 @@ class TicketStatus(db.Model):
     id: Mapped[int] = mapped_column(db.Integer, primary_key=True)
     name: Mapped[str] = mapped_column(db.String(20), unique=True)
     ticket: Mapped[List["MaintenanceTicket"]] = relationship() # 1 status = many relationships
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+        }
 
 class MaintenanceTicket(db.Model):
     __tablename__ = "maintenance_ticket"
