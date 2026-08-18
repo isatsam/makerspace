@@ -84,7 +84,7 @@ export const consumableConfig: ResourceConfig<Consumable> = {
   columns: [
     { key: "name", label: "Name", render: (c) => c.name ?? "(unnamed)", link: (c) => c.id },
     { key: "stock", label: "Stock", render: (c) => String(c.stock) },
-    { key: "low_stock_alert", label: "Low-stock alert", render: (c) => String(c.low_stock_alert) },
+    { key: "low_stock_alert", label: "Notes", render: (c) => c.low_stock_alert <= c.stock ? "" : "Low stock" },
   ],
   fields: [
     { key: "id", label: "ID", render: (c) => String(c.id) },

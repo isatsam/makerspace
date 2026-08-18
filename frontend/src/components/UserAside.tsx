@@ -8,7 +8,7 @@ function UserAside({ data }: UserAsideProps) {
   return (
     <aside className="user-data">
       <div>
-        <h1>Your reservations</h1>
+        <h1>Your current reservations</h1>
         <table id="userReservations">
           <tbody>
             {data.reservations.map((r) => (
@@ -28,7 +28,7 @@ function UserAside({ data }: UserAsideProps) {
         </p>
       </div>
       <div>
-        <h1>Your checkouts</h1>
+        <h1>Your current checkouts</h1>
         <table id="userCheckouts">
           <tbody>
             {data.checkouts.map((c) => (
