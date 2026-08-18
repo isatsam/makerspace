@@ -264,7 +264,6 @@ class EquipmentItemAPI(ItemAPI):            # `/api/equipment/1`
 class ReservationGroupAPI(GroupAPI):        # `/api/reservation`
     view_name = "reservation-group"
     model = models.Reservation
-    _immutable_fields = {"id", "member_id"}
     member_post_allowed = True
 
 class ReservationItemAPI(ItemAPI):          # `/api/reservation/1`
@@ -276,7 +275,6 @@ class ReservationItemAPI(ItemAPI):          # `/api/reservation/1`
 class CheckoutGroupAPI(GroupAPI):           # `/api/checkout`
     view_name = "checkout-group"
     model = models.Checkout
-    _immutable_fields = {"id", "member_id", "equipment_id"}
     member_post_allowed = True
 
 class CheckoutItemAPI(ItemAPI):             # `/api/checkout/1`
