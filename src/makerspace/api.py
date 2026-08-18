@@ -15,7 +15,7 @@ def get_current_member() -> Any|None:
     if member_id:
         result = db.session.execute(
             db.select(models.Member)
-            .where(id == member_id)
+            .where(models.Member.id == member_id)
         ).scalar_one() # same as .scalar().one(), and, in this case, scalar().first()
         return result
     return None
@@ -139,7 +139,7 @@ POST methods to create new objects. Default is False
         elif member.is_admin:
             return jsonify([item.to_dict() for item in items])
         else: # return items that belong to the current user
-            items = items.filter_by(member_id=member.id)
+            items = self.model.query.filter_by(member_id=member.id).all()
 
     def post(self):
         #errors = self.validator.validate(request.json)
