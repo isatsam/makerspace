@@ -1,11 +1,15 @@
 from . import models
 from makerspace import db, app, ModelBase # Modelbase imported for typing
-from typing import List, Type
+from typing import Type, Protocol, runtime_checkable, Any
 from flask import abort, jsonify, request
 from flask.views import MethodView
 from typing import Any
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import inspect as sa_inspect
+
+# Silencec Pyright complaining about the type of the db models
+# FsModel must be used in typing everywhere where the real type is a db model
+from flask_sqlalchemy.model import Model as FsModel
 
 #
 # Helper functions
@@ -41,7 +45,7 @@ perform GET methods (i.e. view items). Default is False
 PATCH methods on objects that belong to them. Default is False
     """
     init_every_request = False
-    model: Type[ModelBase]
+    model: Type[FsModel]
     anon_get_allowed = False
     member_edit_allowed = False
     _immutable_fields: set[str] = {"id"}
@@ -174,7 +178,7 @@ perform GET methods (i.e. lists of view items). Default is False
 POST methods to create new objects. Default is False
     """
     init_every_request = False
-    model: Type[ModelBase]
+    model: Type[FsModel]
     anon_get_allowed = False
     member_post_allowed = False
     _immutable_fields: set[str] = {"id"}
