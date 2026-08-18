@@ -244,11 +244,13 @@ class MaintenanceTicket(db.Model):
     member_id: Mapped[int] = mapped_column(db.Integer, db.ForeignKey("member.id", ondelete="CASCADE"))
     equipment_id: Mapped[int] = mapped_column(db.Integer, db.ForeignKey("equipment.id", ondelete="CASCADE"))
     creation_time: Mapped[datetime] = mapped_column(db.DateTime, default=datetime.now)
+    description: Mapped[str] = mapped_column(db.String)
 
-    def __init__(self, *, status_id: int, member_id: int, equipment_id: int) -> None:
+    def __init__(self, *, status_id: int, member_id: int, equipment_id: int, description: str) -> None:
         self.status_id = status_id
         self.member_id = member_id
         self.equipment_id = equipment_id
+        self.description = description
 
     def to_dict(self) -> dict:
         return {
@@ -257,6 +259,7 @@ class MaintenanceTicket(db.Model):
             "member_id": self.member_id,
             "equipment_id": self.equipment_id,
             "creation_time": self.creation_time.isoformat(),
+            "description": self.description
         }
 
     @classmethod
@@ -265,6 +268,7 @@ class MaintenanceTicket(db.Model):
             status_id=data["status_id"],
             member_id=data["member_id"],
             equipment_id=data["equipment_id"],
+            description=data["description"]
         )
 
 # note: doesnt handle migrations
