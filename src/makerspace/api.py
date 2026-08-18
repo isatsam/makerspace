@@ -283,10 +283,6 @@ class CheckoutItemAPI(ItemAPI):             # `/api/checkout/1`
     _immutable_fields = {"id", "member_id", "equipment_id"}
     member_edit_allowed = True
 
-class CheckoutStatusAPI(GroupAPI):
-    view_name = "checkout_statuses"
-    model = models.CheckoutStatus
-
 class ConsumableGroupAPI(GroupAPI):         # `/api/consumable`
     view_name = "consumable-group"
     model = models.Consumable
@@ -327,6 +323,26 @@ class MemberItemAPI(ItemAPI):               # /api/member/1
     member_edit_allowed = True
 
 #
+# "Helper" endpoints
+#
+class CheckoutStatusAPI(GroupAPI):
+    view_name = "checkout_status"
+    model = models.CheckoutStatus
+
+class EquipmentTypeAPI(GroupAPI):
+    view_name = "equipment_type"
+    model = models.EquipmentType
+
+def ConsumableUnitAPI(GroupAPI):
+    view_name = "consumable_unit"
+    model = models.ConsumableUnit
+
+def TicketStatusAPI(GroupAPI):
+    view_name = "ticket_status"
+    model = models.TicketStatus
+
+
+#
 # Finalise API by setting up routing
 #
 def register_api(app):
@@ -353,5 +369,13 @@ def register_api(app):
         else:
             app.add_url_rule(f"/api/{cl.view_name}",
                 view_func=group_view)
+
+    # set up helper routes
+    for cl in [
+        CheckoutStatusAPI, EquipmentTypeAPI, ConsumableUnitAPI, TicketStatusAPI
+    ]:
+        group_view = cl.as_view(cl.view_name)
+        app.add_url_rule(f"/api/{cl.view_name}",
+            view_func=group_view)
 
 register_api(app=app)
