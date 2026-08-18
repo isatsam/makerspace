@@ -23,8 +23,8 @@ function Header({ currentMember }: HeaderProps) {
       <ul className="header-nav flex">
         <li><Link to="/equipment">All equipment</Link></li>
         <li><Link to="/consumable">All materials</Link></li>
-        <li><Link to="/reservation">Reservations</Link></li>
-        <li><Link to="/checkout">Checkouts</Link></li>
+        <li><Link to="/reservation">{currentMember.is_admin ? "Reservations" : "My reservations"}</Link></li>
+        <li><Link to="/checkout">{currentMember.is_admin ? "Checkouts" : "My checkouts"}</Link></li>
         <li><Link to="/maintenance">Maintenance tickets</Link></li>
         {currentMember.is_admin && (
           <li><Link to="/member">Members</Link></li>

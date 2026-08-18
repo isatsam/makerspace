@@ -11,19 +11,21 @@ interface ListPageProps<T> {
 }
 
 // Generic list page for any resource. Renders a table of the resource's
-// columns; admins also see an "Add new" button that opens an overlay modal
-// (same style as the reservation window) to create a new item via POST.
+// columns; admins (or all users if config.allCanCreate is true) see an
+// "Add new" button that opens an overlay modal (same style as the reservation
+// window) to create a new item via POST.
 export function ListPage<T extends { id: number }>({ config, items }: ListPageProps<T>) {
   const { currentMember } = useSharedData();
   const columns = useResolvedColumns(config);
   const isAdmin = currentMember.is_admin;
+  const canCreate = config.allCanCreate || isAdmin;
   const [adding, setAdding] = useState(false);
 
   return (
     <>
       <div className="page-title-row">
         <h1>{config.title}</h1>
-        {isAdmin && (
+        {canCreate && (
           <button className="reserve-button" onClick={() => setAdding(true)}>
             Add new
           </button>
@@ -65,7 +67,7 @@ export function ListPage<T extends { id: number }>({ config, items }: ListPagePr
         </table>
       )}
 
-      {adding && isAdmin && (
+      {adding && canCreate && (
         <AddWindow
           config={config}
           onClose={() => setAdding(false)}
@@ -150,7 +152,7 @@ export function FieldInput<T>({
   if (field.input === "select" && field.options) {
     return (
       <select value={value} onChange={(e) => onChange(e.target.value)}>
-        <option value="">—</option>
+        <option value=""></option>
         {field.options.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}

@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import type { ResourceConfig } from "../resources";
-import { useSharedData } from "../dataContext";
 import { useOptionsForField } from "../resources";
 import { fetchItem, patchItem, deleteItem, ApiError } from "../api";
 import { FieldInput } from "./ListPage";
@@ -12,6 +11,8 @@ interface DetailPageProps<T> {
   // Optional extra actions rendered at the bottom (e.g. the Reserve button
   // on the equipment detail page).
   extraActions?: (item: T) => React.ReactNode;
+  // Optional custom title (e.g. "Your account" for member detail)
+  title?: string;
 }
 
 type DetailState<T> =
@@ -23,9 +24,8 @@ export function DetailPage<T extends { id: number }>({
   config,
   id,
   extraActions,
+  title,
 }: DetailPageProps<T>) {
-  const { currentMember } = useSharedData();
-  const isAdmin = currentMember.is_admin;
   const [state, setState] = useState<DetailState<T>>({ kind: "loading" });
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Record<string, string>>({});
@@ -49,7 +49,7 @@ export function DetailPage<T extends { id: number }>({
     };
   }, [config.resource, id]);
 
-  if (state.kind === "loading") return <p>Loading…</p>;
+  if (state.kind === "loading") return <p>Loading</p>;
   if (state.kind === "error") return <p>Could not load: {state.message}</p>;
   const item = state.item;
 
@@ -102,14 +102,15 @@ export function DetailPage<T extends { id: number }>({
       });
   };
 
+  // Use custom title if provided, otherwise use default
+  const displayTitle = title ?? `${config.singularTitle} #${item.id}`;
+
   return (
     <>
       <p>
         <Link to={`/${config.urlSegment}`}>&larr; Back to {config.title}</Link>
       </p>
-      <h1>
-        {config.singularTitle} #{item.id}
-      </h1>
+      <h1>{displayTitle}</h1>
 
       <table className="equipment-table">
         <tbody>
@@ -141,13 +142,13 @@ export function DetailPage<T extends { id: number }>({
       {message && <p id="selectWindowMessage" style={{ fontWeight: 700 }}>{message}</p>}
 
       <p>
-        {isAdmin && !editing && (
+        {!editing && (
           <>
             <button className="reserve-button" onClick={startEdit}>Edit</button>{" "}
             <button className="reserve-button" onClick={handleDelete}>Delete</button>
           </>
         )}
-        {isAdmin && editing && (
+        {editing && (
           <>
             <button className="reserve-button" onClick={handleSave}>Save</button>{" "}
             <button onClick={() => setEditing(false)}>Cancel</button>

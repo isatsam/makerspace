@@ -113,7 +113,7 @@ function MaintenanceDetailRoute() {
 }
 function MemberDetailRoute() {
   const { id } = useParams();
-  return <DetailPage<Member> config={memberConfig} id={id!} />;
+  return <DetailPage<Member> config={memberConfig} id={id!} title="Your account" />;
 }
 
 export default App;

@@ -52,6 +52,8 @@ export interface ResourceConfig<T> {
   fields: FieldDef<T>[];
   // The id getter.
   idOf: (item: T) => number;
+  // If true, all users can create items (not just admins).
+  allCanCreate?: boolean;
 }
 
 // ---- Equipment ----
@@ -150,6 +152,7 @@ export const maintenanceConfig: ResourceConfig<MaintenanceTicket> = {
   singularTitle: "Maintenance ticket",
   list: () => [],
   idOf: (t) => t.id,
+  allCanCreate: true, // Any member can create maintenance tickets
   columns: [
     { key: "id", label: "ID", render: (t) => String(t.id), link: (t) => t.id },
     { key: "equipment_id", label: "Equipment", render: () => "" },
