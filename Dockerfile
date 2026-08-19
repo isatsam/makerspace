@@ -39,15 +39,15 @@ COPY src/requirements.txt ./src_requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt -r src_requirements.txt && \
     pip install --no-cache-dir gunicorn
 
+# Copy built frontend from stage 1 to Flask's static folder first
+# We copy to ./makerspace/static so it won't be overwritten by the next COPY
+COPY --from=frontend-builder /app/frontend/dist ./makerspace/static
+
 # Copy backend source
 COPY src/makerspace ./makerspace
 
 # Add src directory to PYTHONPATH so that 'makerspace' can be imported
 ENV PYTHONPATH=/app/src:$PYTHONPATH
-
-# Copy built frontend from stage 1 to Flask's static folder
-# Flask app is at src/makerspace, so static folder is src/makerspace/static
-COPY --from=frontend-builder /app/frontend/dist ./src/makerspace/static
 
 # Create the database directory if it doesn't exist
 RUN mkdir -p /app/src/instance

@@ -2,7 +2,7 @@
 # from makerspace import app
 from flask import Flask
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static")
 
 
 # Configure the SQLAlchemy db object, which we can now access via
