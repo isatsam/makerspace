@@ -391,7 +391,8 @@ def serve_frontend(path):
     if path.startswith('api/'):
         abort(404)
     # Try to serve the specific file, fall back to index.html for SPA routing
+    static_folder = app.static_folder or ''
     try:
-        return send_from_directory(app.static_folder, path if path else 'index.html')
+        return send_from_directory(static_folder, path if path else 'index.html')
     except NotFound:
-        return send_from_directory(app.static_folder, 'index.html')
+        return send_from_directory(static_folder, 'index.html')
