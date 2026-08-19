@@ -12,8 +12,9 @@ COPY frontend/package*.json ./
 # Install dependencies
 RUN npm ci
 
-# Copy frontend source
+# Copy all frontend source files (including tsconfig.json)
 COPY frontend/src ./src
+COPY frontend/tsconfig.json ./
 COPY frontend/vite.config.ts ./
 COPY frontend/index.html ./
 
