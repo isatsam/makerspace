@@ -350,7 +350,7 @@ def register_api(app):
         ConsumableItemAPI, MaintenanceTicketItemAPI, MemberItemAPI,
     ]:
         item_view = cl.as_view(cl.view_name)
-        app.add_url_rule(f"/api/{cl.view_name[:cl.view_name.rfind("-")]}/<int:id>",
+        app.add_url_rule(f"/api/{cl.view_name[:cl.view_name.rfind('-')]}/<int:id>",
             view_func=item_view)
 
     # set up /api/someitem type routes
@@ -360,7 +360,7 @@ def register_api(app):
     ]:
         group_view = cl.as_view(cl.view_name)
         if "-" in cl.view_name:
-            app.add_url_rule(f"/api/{cl.view_name[:cl.view_name.rfind("-")]}",
+            app.add_url_rule(f"/api/{cl.view_name[:cl.view_name.rfind('-')]}",
                 view_func=group_view)
         else:
             app.add_url_rule(f"/api/{cl.view_name}",
