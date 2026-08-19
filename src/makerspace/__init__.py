@@ -24,8 +24,8 @@ db = SQLAlchemy(model_class=ModelBase)
 app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///database.db"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = "your-secret-key-here"
+db.init_app(app)
 
 # initialise everything
 from . import models
-db.init_app(app)
 from . import api

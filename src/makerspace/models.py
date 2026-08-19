@@ -277,3 +277,5 @@ class MaintenanceTicket(db.Model):
 # note: doesnt handle migrations
 # db.create_all() removed - it was causing table redefinition errors with Gunicorn workers
 # Tables should be created via Flask-SQLAlchemy's automatic handling or a separate init script
+with app.app_context():
+    db.create_all()
