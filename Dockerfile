@@ -52,6 +52,9 @@ ENV PYTHONPATH=/app/src:$PYTHONPATH
 # Create the database directory if it doesn't exist
 RUN mkdir -p /app/src/instance
 
+# Copy the development database to the container
+COPY src/instance/database.db /app/src/instance/database.db
+
 # Set environment variables
 ENV FLASK_APP=makerspace
 ENV FLASK_ENV=production
