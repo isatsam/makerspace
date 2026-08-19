@@ -30,9 +30,6 @@ Thumbs.db
 .git
 .gitignore
 
-# Database (will be mounted as volume)
-src/instance/database.db
-
 # Docker
 Dockerfile
 docker-compose.yml
