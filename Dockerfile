@@ -42,6 +42,9 @@ RUN pip install --no-cache-dir -r requirements.txt -r src_requirements.txt && \
 # Copy backend source
 COPY src/makerspace ./src/makerspace
 
+# Add src directory to PYTHONPATH so that 'makerspace' can be imported
+ENV PYTHONPATH=/app/src:$PYTHONPATH
+
 # Copy built frontend from stage 1 to Flask's static folder
 # Flask app is at src/makerspace, so static folder is src/makerspace/static
 COPY --from=frontend-builder /app/frontend/dist ./src/makerspace/static
