@@ -40,7 +40,7 @@ RUN pip install --no-cache-dir -r requirements.txt -r src_requirements.txt && \
     pip install --no-cache-dir gunicorn
 
 # Copy backend source
-COPY src/makerspace ./src/makerspace
+COPY src/makerspace ./makerspace
 
 # Add src directory to PYTHONPATH so that 'makerspace' can be imported
 ENV PYTHONPATH=/app/src:$PYTHONPATH
@@ -53,7 +53,7 @@ COPY --from=frontend-builder /app/frontend/dist ./src/makerspace/static
 RUN mkdir -p /app/src/instance
 
 # Set environment variables
-ENV FLASK_APP=src.makerspace
+ENV FLASK_APP=makerspace
 ENV FLASK_ENV=production
 ENV PORT=5000
 
@@ -62,4 +62,4 @@ EXPOSE 5000
 
 # Use Gunicorn as production server to serve both API and frontend
 # Gunicorn will serve the Flask app which handles both /api/* and /* routes
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--threads", "2", "src.makerspace:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--threads", "2", "makerspace:app"]
