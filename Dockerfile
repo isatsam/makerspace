@@ -31,11 +31,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy backend requirements
-COPY src/requirements.txt ./
+# Copy all requirements files
+COPY requirements.txt ./
+COPY src/requirements.txt ./src_requirements.txt
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Install Python dependencies - merge both requirements files
+RUN pip install --no-cache-dir -r requirements.txt -r src_requirements.txt && \
+    pip install --no-cache-dir gunicorn
 
 # Copy backend source
 COPY src/makerspace ./src/makerspace
@@ -52,5 +54,9 @@ ENV FLASK_APP=src.makerspace
 ENV FLASK_ENV=production
 ENV PORT=5000
 
-# The Flask server will serve both the API and the static frontend files
-CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]
+# Expose the port Flask will run on
+EXPOSE 5000
+
+# Use Gunicorn as production server to serve both API and frontend
+# Gunicorn will serve the Flask app which handles both /api/* and /* routes
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--threads", "2", "src.makerspace:app"]
