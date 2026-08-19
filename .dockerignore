@@ -1,0 +1,39 @@
+# Dependencies
+frontend/node_modules
+
+# Build outputs
+frontend/dist
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Database (will be mounted as volume)
+src/instance/database.db
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore

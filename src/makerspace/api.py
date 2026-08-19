@@ -375,3 +375,23 @@ def register_api(app):
             view_func=group_view)
 
 register_api(app=app)
+
+
+# Serve React frontend for all non-API routes
+# This must come AFTER all API routes are registered
+from flask import send_from_directory, abort
+from werkzeug.exceptions import NotFound
+
+
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_frontend(path):
+    """Serve the React frontend for all non-API routes."""
+    # Don't serve frontend for API routes
+    if path.startswith('api/'):
+        abort(404)
+    # Try to serve the specific file, fall back to index.html for SPA routing
+    try:
+        return send_from_directory(app.static_folder, path if path else 'index.html')
+    except NotFound:
+        return send_from_directory(app.static_folder, 'index.html')
