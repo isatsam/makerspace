@@ -46,9 +46,6 @@ COPY --from=frontend-builder /app/frontend/dist ./makerspace/static
 # Copy backend source
 COPY src/makerspace ./makerspace
 
-# Add src directory to PYTHONPATH so that 'makerspace' can be imported
-ENV PYTHONPATH=/app/src:$PYTHONPATH
-
 # Create the database directory if it doesn't exist
 RUN mkdir -p /app/src/instance
 
