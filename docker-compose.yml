@@ -1,16 +1,14 @@
-version: '3.8'
-
 services:
   makerspacehub:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: makerspacehub
+    container_name: makerspace
     ports:
-      - "3000:5000"
+      - "5000:5000"
     volumes:
       # Mount the database directory as a volume so it persists outside the container
-      - ./data:/app/src/instance
+      - ./src/instance:/app/instance
     environment:
       - FLASK_ENV=production
       - PORT=5000
