@@ -23,7 +23,7 @@ def get_current_member() -> Any|None:
         result = db.session.execute(
             db.select(models.Member)
             .where(models.Member.id == member_id)
-        ).scalar_one() # same as .scalar().one(), and, in this case, scalar().first()
+        ).scalar_one_or_none() # same as .scalar().one(), and, in this case, scalar().first()
         return result
     return None
 
