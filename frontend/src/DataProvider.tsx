@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { getCurrentMember } from "./currentMember";
+import { getCurrentMember, setCurrentMemberCookie, MEMBER_ID_COOKIE } from "./currentMember";
 import {
   fetchEquipment,
   fetchReservations,
@@ -60,6 +60,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     setLoad({ kind: "loading" });
+
+    // no cookie? set one
+    const hasCookie = document.cookie
+      .split("; ")
+      .some((row) => row.startsWith(`${MEMBER_ID_COOKIE}=`));
+    if (!hasCookie) {
+      setCurrentMemberCookie(getCurrentMember().id); // defaults to Gus (5)
+    }
 
     // Members list is admin-only; non-admins get a 403, which we swallow
     // (the aside and member pages degrade gracefully without it).
