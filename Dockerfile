@@ -32,12 +32,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy all requirements files
-COPY requirements.txt ./
-COPY src/requirements.txt ./src_requirements.txt
+COPY src/requirements.txt ./requirements.txt
 
 # Install Python dependencies - merge both requirements files
-RUN pip install --no-cache-dir -r requirements.txt -r src_requirements.txt && \
-    pip install --no-cache-dir gunicorn
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy built frontend from stage 1 to Flask's static folder first
 # We copy to ./makerspace/static so it won't be overwritten by the next COPY
