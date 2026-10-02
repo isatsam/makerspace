@@ -6,9 +6,9 @@ services:
     container_name: makerspace
     ports:
       - "5000:5000"
-    volumes:
+    #volumes:
       # Mount the database directory as a volume so it persists outside the container
-      - ./src/instance:/app/instance
+    #  - ./src/instance:/app/instance
     environment:
       - FLASK_ENV=production
       - PORT=5000

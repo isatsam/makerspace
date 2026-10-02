@@ -43,6 +43,7 @@ COPY --from=frontend-builder /app/frontend/dist ./makerspace/static
 
 # Copy backend source
 COPY src/makerspace ./makerspace
+COPY src/instance ./instance
 
 # Set environment variables
 ENV FLASK_APP=makerspace
